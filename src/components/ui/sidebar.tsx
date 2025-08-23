@@ -2,20 +2,26 @@
 
 import * as React from "react"
 import { cva } from "class-variance-authority"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Sheet, SheetContent, SheetTrigger, SheetClose } from "@/components/ui/sheet"
 import { Button, type ButtonProps } from "@/components/ui/button"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
+import { useTheme } from "next-themes"
+import { Switch } from "@/components/ui/switch"
+import { CitadelGuardLogo, GoogleIcon } from "@/components/icons"
+import { KeyRound, Bot, Save, Sun, Moon } from "lucide-react"
 
 const SidebarContext = React.createContext<{
   isCollapsed: boolean
   isMobile: boolean
   activeItem?: string
   setActiveItem?: (id: string) => void
+  setCollapsed: (collapsed: boolean) => void;
 }>({
   isCollapsed: false,
   isMobile: false,
+  setCollapsed: () => {},
 })
 
 export function useSidebar() {
@@ -34,8 +40,12 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
     setIsCollapsed(isMobile)
   }, [isMobile])
 
+  const setCollapsed = (collapsed: boolean) => {
+    setIsCollapsed(collapsed)
+  }
+
   return (
-    <SidebarContext.Provider value={{ isCollapsed, isMobile, }}>
+    <SidebarContext.Provider value={{ isCollapsed, isMobile, setCollapsed }}>
         <TooltipProvider delayDuration={0}>
             {children}
         </TooltipProvider>
@@ -74,9 +84,14 @@ export function SidebarHeader({
   const { isCollapsed } = useSidebar();
   return (
     <div
-      className={cn("flex h-16 shrink-0 items-center gap-2 border-b px-4", isCollapsed && "justify-center", className)}
+      className={cn("flex h-16 shrink-0 items-center gap-2 border-b px-4", isCollapsed && "justify-center px-2", className)}
     >
-      {children}
+      {React.Children.toArray(children).map((child, index) => {
+        if (React.isValidElement(child) && child.type === "span" && isCollapsed) {
+          return null
+        }
+        return child
+      })}
     </div>
   )
 }
@@ -98,7 +113,7 @@ export function SidebarFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   const { isCollapsed } = useSidebar();
   return (
-    <div className={cn("mt-auto border-t p-2", isCollapsed && "p-1", className)}>
+    <div className={cn("mt-auto border-t p-4", isCollapsed && "p-2 justify-center", className)}>
       {children}
     </div>
   )
@@ -188,16 +203,71 @@ export function SidebarInset({
 }: React.HTMLAttributes<HTMLDivElement>) {
   const { isCollapsed, isMobile } = useSidebar()
   return (
-    <main
-      className={cn("transition-all duration-300 ease-in-out", 
-      !isMobile && "md:pl-16",
-      !isMobile && !isCollapsed && "md:pl-64", 
+    <div
+      className={cn("flex flex-col flex-1 max-h-screen overflow-y-auto bg-muted/30 transition-all duration-300 ease-in-out", 
+      !isMobile && (isCollapsed ? "ml-16" : "ml-64"),
       className)}
     >
       {children}
-    </main>
+    </div>
   )
 }
+
+const MobileSidebar = () => {
+  const { setTheme, theme } = useTheme();
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
+
+   const menuItems = [
+    { id: 'passwords', label: 'Passwords', icon: KeyRound },
+    { id: 'api-keys', label: 'AI API Keys', icon: Bot },
+    { id: 'google-codes', label: 'Google Codes', icon: GoogleIcon },
+    { id: 'backup', label: 'Backup & Restore', icon: Save },
+  ];
+  
+  // This is a simplified version for the mobile sheet
+  // In a real app, you'd likely pass this state down or use a global state manager
+  const [activeView, setActiveView] = React.useState('passwords');
+
+  return (
+    <SheetContent side="left" className="flex w-64 flex-col p-0">
+      <SidebarHeader>
+        <CitadelGuardLogo className="h-7 w-7 text-primary" />
+        <span className="text-lg font-semibold tracking-tight">Citadel Guard</span>
+      </SidebarHeader>
+      <SidebarContent>
+        <SidebarMenu>
+          {menuItems.map((item) => (
+             <SidebarMenuItem key={item.id}>
+               <SheetClose asChild>
+                <SidebarMenuButton
+                  onClick={() => setActiveView(item.id)}
+                  isActive={activeView === item.id}
+                >
+                  <item.icon className="h-5 w-5" />
+                  <span>{item.label}</span>
+                </SidebarMenuButton>
+                </SheetClose>
+             </SidebarMenuItem>
+          ))}
+        </SidebarMenu>
+      </SidebarContent>
+      <SidebarFooter>
+        <div className="flex items-center justify-center space-x-2">
+            <Sun className="h-5 w-5" />
+            <Switch
+              id="mobile-theme-switch"
+              checked={theme === 'dark'}
+              onCheckedChange={toggleTheme}
+            />
+            <Moon className="h-5 w-5" />
+          </div>
+      </SidebarFooter>
+    </SheetContent>
+  );
+}
+
 
 export function SidebarTrigger({
   className,
@@ -220,46 +290,7 @@ export function SidebarTrigger({
           {children}
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-64 p-0">
-        <Sidebar className="flex w-full border-r-0">
-          <SidebarHeader>
-            <div className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full">
-                    <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="24"
-                        height="24"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        className="h-6 w-6 text-primary"
-                    >
-                        <path d="M12 2L2 7l10 5 10-5-10-5z" />
-                        <path d="M2 17l10 5 10-5" />
-                        <path d="M2 12l10 5 10-5" />
-                        <path d="M12 22V12" />
-                    </svg>
-                </Button>
-                <div className="flex flex-col">
-                    <h2 className="text-lg font-semibold tracking-tight">Citadel Guard</h2>
-                </div>
-            </div>
-          </SidebarHeader>
-          <SidebarContent>
-            <SidebarMenu>
-                <SidebarMenuItem>
-                    <SidebarMenuButton>
-                        <KeyRound className="h-5 w-5" />
-                        <span>Passwords</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            </SidebarMenu>
-          </SidebarContent>
-        </Sidebar>
-      </SheetContent>
+      <MobileSidebar />
     </Sheet>
   )
 }

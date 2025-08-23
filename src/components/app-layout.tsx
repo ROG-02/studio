@@ -12,7 +12,6 @@ import {
   SidebarTrigger,
   SidebarFooter,
 } from '@/components/ui/sidebar';
-import { Button } from '@/components/ui/button';
 import { CitadelGuardLogo, GoogleIcon } from '@/components/icons';
 import { KeyRound, Bot, Save, PanelLeft, Sun, Moon } from 'lucide-react';
 import PasswordsSection from '@/components/sections/passwords';
@@ -22,7 +21,6 @@ import BackupSection from '@/components/sections/backup';
 import type { Dispatch, SetStateAction } from 'react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
-import { Label } from '@/components/ui/label';
 
 interface AppLayoutProps {
   activeView: string;
@@ -60,53 +58,54 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   
   return (
     <SidebarProvider>
-      <Sidebar>
-        <SidebarHeader>
-          <div className="flex items-center gap-2">
+      <div className="flex h-screen w-full">
+        <Sidebar>
+          <SidebarHeader>
             <CitadelGuardLogo className="h-7 w-7 text-primary" />
             <span className="text-lg font-semibold tracking-tight">Citadel Guard</span>
-          </div>
-        </SidebarHeader>
-        <SidebarContent>
-          <SidebarMenu>
-            {menuItems.map((item) => (
-              <SidebarMenuItem key={item.id}>
-                <SidebarMenuButton
-                  onClick={() => setActiveView(item.id)}
-                  isActive={activeView === item.id}
-                  tooltip={item.label}
-                >
-                  <item.icon className="h-5 w-5" />
-                  <span>{item.label}</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
-          </SidebarMenu>
-        </SidebarContent>
-        <SidebarFooter>
-            <div className="flex items-center justify-center space-x-2">
-              <Sun className="h-5 w-5" />
-              <Switch
-                id="theme-switch"
-                checked={theme === 'dark'}
-                onCheckedChange={toggleTheme}
-              />
-              <Moon className="h-5 w-5" />
+          </SidebarHeader>
+          <SidebarContent>
+            <SidebarMenu>
+              {menuItems.map((item) => (
+                <SidebarMenuItem key={item.id}>
+                  <SidebarMenuButton
+                    onClick={() => setActiveView(item.id)}
+                    isActive={activeView === item.id}
+                    tooltip={item.label}
+                  >
+                    <item.icon className="h-5 w-5" />
+                    <span>{item.label}</span>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarContent>
+          <SidebarFooter>
+              <div className="flex items-center justify-center space-x-2">
+                <Sun className="h-5 w-5" />
+                <Switch
+                  id="theme-switch"
+                  checked={theme === 'dark'}
+                  onCheckedChange={toggleTheme}
+                  aria-label="Toggle theme"
+                />
+                <Moon className="h-5 w-5" />
+              </div>
+          </SidebarFooter>
+        </Sidebar>
+        <SidebarInset>
+          <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 md:hidden">
+            <SidebarTrigger>
+              <PanelLeft />
+            </SidebarTrigger>
+            <div className="flex items-center gap-2">
+              <CitadelGuardLogo className="h-7 w-7 text-primary" />
+              <h1 className="text-lg font-semibold">Citadel Guard</h1>
             </div>
-        </SidebarFooter>
-      </Sidebar>
-      <SidebarInset className="max-h-screen overflow-y-auto bg-muted/30">
-        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 md:hidden">
-          <SidebarTrigger>
-            <PanelLeft />
-          </SidebarTrigger>
-          <div className="flex items-center gap-2">
-            <CitadelGuardLogo className="h-7 w-7 text-primary" />
-            <h1 className="text-lg font-semibold">Citadel Guard</h1>
-          </div>
-        </header>
-        <div className="p-4 sm:p-6 lg:p-8">{renderActiveView()}</div>
-      </SidebarInset>
+          </header>
+          <div className="p-4 sm:p-6 lg:p-8">{renderActiveView()}</div>
+        </SidebarInset>
+      </div>
     </SidebarProvider>
   );
 }
