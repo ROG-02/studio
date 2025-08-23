@@ -82,7 +82,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
 
   return (
     <SidebarProvider>
-      <div className="flex h-screen w-full">
+      <div className="relative flex h-screen w-full">
         <Sidebar>
           <SidebarHeader>
             <CitadelGuardLogo className="h-7 w-7 text-primary" />

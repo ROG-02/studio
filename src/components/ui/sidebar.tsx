@@ -35,10 +35,17 @@ export function useSidebar() {
 export function SidebarProvider({ children }: { children: React.ReactNode }) {
   const isMobile = useIsMobile()
   const [isCollapsed, setIsCollapsed] = React.useState(isMobile)
+  const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
-    setIsCollapsed(isMobile)
-  }, [isMobile])
+    setMounted(true);
+  }, []);
+
+  React.useEffect(() => {
+    if (mounted) {
+      setIsCollapsed(isMobile)
+    }
+  }, [isMobile, mounted])
 
   const setCollapsed = (collapsed: boolean) => {
     setIsCollapsed(collapsed)
@@ -204,9 +211,11 @@ export function SidebarInset({
   const { isMobile, isCollapsed } = useSidebar()
   return (
     <div
-      className={cn("flex flex-col flex-1 max-h-screen overflow-y-auto bg-muted/30 transition-all duration-300 ease-in-out", 
-      !isMobile && (isCollapsed ? "md:ml-16" : "md:ml-64"),
-      className)}
+      className={cn(
+        "flex-1 flex-col max-h-screen overflow-y-auto bg-muted/30 transition-all duration-300 ease-in-out",
+        !isMobile && (isCollapsed ? "ml-16" : "ml-64"),
+        className
+      )}
     >
       {children}
     </div>
