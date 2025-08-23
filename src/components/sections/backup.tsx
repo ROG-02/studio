@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 export default function BackupSection() {
   const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
   const [apiKeys, setApiKeys] = useLocalStorage<ApiKey[]>('citadel-api-keys', []);
-  const [googleCodes, setGoogleCodes] = useLocalStorage<GoogleBackupCode[]>('citadel-google-codes', []);
+  const [googleCodes, setGoogleCodes] = useLocalStorage<string[]>('citadel-google-codes', []);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -75,7 +75,7 @@ export default function BackupSection() {
       if (Array.isArray(dataToImport.passwords) && Array.isArray(dataToImport.apiKeys) && Array.isArray(dataToImport.googleCodes)) {
         setPasswords(dataToImport.passwords);
         setApiKeys(dataToImport.apiKeys);
-        setGoogleCodes(dataToImport.googleCodes);
+        setGoogleCodes(dataToImport.googleCodes as GoogleBackupCode[]);
         toast({ title: 'Data restored successfully!' });
       } else {
         throw new Error('Invalid backup file format.');
@@ -95,7 +95,8 @@ export default function BackupSection() {
           <CardTitle>Backup & Restore</CardTitle>
           <CardDescription>Export all your data into a single file or restore from a backup.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
             <Card>
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
                     <CardTitle className="text-lg font-medium">Export Data</CardTitle>
@@ -150,6 +151,7 @@ export default function BackupSection() {
                     </Button>
                 </CardContent>
             </Card>
+          </div>
         </CardContent>
       </Card>
 
