@@ -1,7 +1,8 @@
 export interface Password {
   id: string;
   name: string;
-  username: string;
+  username?: string;
+  email: string;
   value: string;
 }
 

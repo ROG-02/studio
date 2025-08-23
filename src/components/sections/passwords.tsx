@@ -28,6 +28,7 @@ export default function PasswordsSection() {
       id: currentPassword?.id || crypto.randomUUID(),
       name: formData.get('name') as string,
       username: formData.get('username') as string,
+      email: formData.get('email') as string,
       value: formData.get('value') as string,
     };
 
@@ -77,12 +78,16 @@ export default function PasswordsSection() {
               <form onSubmit={handleSave}>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">Site</Label>
+                    <Label htmlFor="name" className="text-right">Platform</Label>
                     <Input id="name" name="name" defaultValue={currentPassword?.name} className="col-span-3" required />
                   </div>
-                  <div className="grid grid-cols-4 items-center gap-4">
+                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="username" className="text-right">Username</Label>
-                    <Input id="username" name="username" defaultValue={currentPassword?.username} className="col-span-3" required />
+                    <Input id="username" name="username" defaultValue={currentPassword?.username} className="col-span-3" />
+                  </div>
+                  <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="email" className="text-right">Email</Label>
+                    <Input id="email" name="email" type="email" defaultValue={currentPassword?.email} className="col-span-3" required />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="value" className="text-right">Password</Label>
@@ -105,8 +110,8 @@ export default function PasswordsSection() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Site</TableHead>
-                <TableHead>Username</TableHead>
+                <TableHead>Platform</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Password</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -115,7 +120,7 @@ export default function PasswordsSection() {
               {passwords.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
-                  <TableCell>{p.username}</TableCell>
+                  <TableCell>{p.email}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <span className="font-mono">
