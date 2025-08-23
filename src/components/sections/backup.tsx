@@ -11,6 +11,7 @@ import { Upload, Download, ShieldCheck, FileWarning, Loader2 } from 'lucide-reac
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { Textarea } from '@/components/ui/textarea';
+import { Label } from '@/components/ui/label';
 
 export default function BackupSection() {
   const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
