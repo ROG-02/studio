@@ -8,7 +8,10 @@ function getValue<T>(key: string, defaultValue: T): T {
   }
   try {
     const saved = localStorage.getItem(key);
-    return saved ? JSON.parse(saved) : defaultValue;
+    if (saved) {
+      return JSON.parse(saved);
+    }
+    return defaultValue;
   } catch (error) {
     console.warn(`Error reading localStorage key “${key}”:`, error);
     return defaultValue;
@@ -19,11 +22,9 @@ export function useLocalStorage<T>(
   key: string,
   defaultValue: T
 ): [T, React.Dispatch<React.SetStateAction<T>>] {
-  const [value, setValue] = useState<T>(defaultValue);
-
-  useEffect(() => {
-    setValue(getValue(key, defaultValue));
-  }, [key, defaultValue]);
+  const [value, setValue] = useState<T>(() => {
+    return getValue(key, defaultValue);
+  });
 
   useEffect(() => {
     try {
