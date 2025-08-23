@@ -72,10 +72,10 @@ export default function BackupSection() {
     try {
       const dataToImport = JSON.parse(importedData) as AppData;
       // Basic validation
-      if (Array.isArray(dataToImport.passwords) && Array.isArray(dataToImport.apiKeys) && Array.isArray(dataToImport.googleBackupCodes)) {
+      if (Array.isArray(dataToImport.passwords) && Array.isArray(dataToImport.apiKeys) && Array.isArray(dataToImport.googleCodes)) {
         setPasswords(dataToImport.passwords);
         setApiKeys(dataToImport.apiKeys);
-        setGoogleCodes(dataToImport.googleBackupCodes);
+        setGoogleCodes(dataToImport.googleCodes);
         toast({ title: 'Data restored successfully!' });
       } else {
         throw new Error('Invalid backup file format.');

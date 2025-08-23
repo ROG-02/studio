@@ -17,5 +17,5 @@ export type GoogleBackupCode = string;
 export interface AppData {
   passwords: Password[];
   apiKeys: ApiKey[];
-  googleBackupCodes: GoogleBackupCode[];
+  googleCodes: GoogleBackupCode[];
 }
