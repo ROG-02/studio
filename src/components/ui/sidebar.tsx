@@ -12,6 +12,12 @@ import { Switch } from "@/components/ui/switch"
 import { CitadelGuardLogo, GoogleIcon } from "@/components/icons"
 import { KeyRound, Bot, Save, Sun, Moon, PanelLeft } from "lucide-react"
 
+type MenuItem = {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+};
+
 const SidebarContext = React.createContext<{
   isCollapsed: boolean
   isMobile: boolean
@@ -208,12 +214,10 @@ export function SidebarInset({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { isMobile, isCollapsed } = useSidebar()
   return (
     <div
       className={cn(
-        "flex-1 flex-col max-h-screen overflow-y-auto bg-muted/30 transition-all duration-300 ease-in-out",
-        !isMobile && (isCollapsed ? "ml-16" : "ml-64"),
+        "flex-1 flex-col max-h-screen overflow-y-auto bg-muted/30",
         className
       )}
     >
@@ -222,7 +226,7 @@ export function SidebarInset({
   )
 }
 
-const MobileSidebar = () => {
+const MobileSidebar = ({ menuItems, activeView, setActiveView }: { menuItems: MenuItem[]; activeView: string; setActiveView: (view: string) => void; }) => {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = React.useState(false);
 
@@ -233,17 +237,6 @@ const MobileSidebar = () => {
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
-
-   const menuItems = [
-    { id: 'passwords', label: 'Passwords', icon: KeyRound },
-    { id: 'api-keys', label: 'AI API Keys', icon: Bot },
-    { id: 'google-codes', label: 'Google Codes', icon: GoogleIcon },
-    { id: 'backup', label: 'Backup & Restore', icon: Save },
-  ];
-  
-  // This is a simplified version for the mobile sheet
-  // In a real app, you'd likely pass this state down or use a global state manager
-  const [activeView, setActiveView] = React.useState('passwords');
 
   const renderThemeSwitcher = () => {
     if (!mounted) {
@@ -296,8 +289,11 @@ const MobileSidebar = () => {
 export function SidebarTrigger({
   className,
   children,
+  menuItems,
+  activeView,
+  setActiveView,
   ...props
-}: ButtonProps) {
+}: ButtonProps & { menuItems: MenuItem[], activeView: string, setActiveView: (view: string) => void }) {
   const { isMobile } = useSidebar()
 
   if (!isMobile) return null
@@ -314,7 +310,7 @@ export function SidebarTrigger({
           {children}
         </Button>
       </SheetTrigger>
-      <MobileSidebar />
+      <MobileSidebar menuItems={menuItems} activeView={activeView} setActiveView={setActiveView} />
     </Sheet>
   )
 }

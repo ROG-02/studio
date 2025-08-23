@@ -108,9 +108,13 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
               {renderThemeSwitcher()}
           </SidebarFooter>
         </Sidebar>
-        <SidebarInset>
+        <div className="flex-1 flex flex-col max-h-screen overflow-y-auto bg-muted/30">
           <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 md:hidden">
-            <SidebarTrigger>
+            <SidebarTrigger
+              menuItems={menuItems}
+              activeView={activeView}
+              setActiveView={setActiveView}
+            >
               <PanelLeft />
             </SidebarTrigger>
             <div className="flex items-center gap-2">
@@ -118,8 +122,8 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
               <h1 className="text-lg font-semibold">Citadel Guard</h1>
             </div>
           </header>
-          <div className="p-4 sm:p-6 lg:p-8">{renderActiveView()}</div>
-        </SidebarInset>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8">{renderActiveView()}</main>
+        </div>
       </div>
     </SidebarProvider>
   );
