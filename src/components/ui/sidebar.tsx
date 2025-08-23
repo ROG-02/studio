@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import { useTheme } from "next-themes"
 import { Switch } from "@/components/ui/switch"
 import { CitadelGuardLogo, GoogleIcon } from "@/components/icons"
-import { KeyRound, Bot, Save, Sun, Moon } from "lucide-react"
+import { KeyRound, Bot, Save, Sun, Moon, PanelLeft } from "lucide-react"
 
 const SidebarContext = React.createContext<{
   isCollapsed: boolean
@@ -201,11 +201,11 @@ export function SidebarInset({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { isMobile } = useSidebar()
+  const { isMobile, isCollapsed } = useSidebar()
   return (
     <div
       className={cn("flex flex-col flex-1 max-h-screen overflow-y-auto bg-muted/30 transition-all duration-300 ease-in-out", 
-      !isMobile && "md:ml-[256px]",
+      !isMobile && (isCollapsed ? "md:ml-16" : "md:ml-64"),
       className)}
     >
       {children}
