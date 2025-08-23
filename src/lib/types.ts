@@ -1,0 +1,20 @@
+export interface Password {
+  id: string;
+  name: string;
+  username: string;
+  value: string;
+}
+
+export interface ApiKey {
+  id: string;
+  name: string;
+  value: string;
+}
+
+export type GoogleBackupCode = string;
+
+export interface AppData {
+  passwords: Password[];
+  apiKeys: ApiKey[];
+  googleBackupCodes: GoogleBackupCode[];
+}
