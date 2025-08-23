@@ -201,11 +201,11 @@ export function SidebarInset({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { isCollapsed, isMobile } = useSidebar()
+  const { isMobile } = useSidebar()
   return (
     <div
       className={cn("flex flex-col flex-1 max-h-screen overflow-y-auto bg-muted/30 transition-all duration-300 ease-in-out", 
-      !isMobile && (isCollapsed ? "ml-16" : "ml-64"),
+      !isMobile && "md:ml-[256px]",
       className)}
     >
       {children}
@@ -215,6 +215,12 @@ export function SidebarInset({
 
 const MobileSidebar = () => {
   const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
@@ -229,6 +235,23 @@ const MobileSidebar = () => {
   // This is a simplified version for the mobile sheet
   // In a real app, you'd likely pass this state down or use a global state manager
   const [activeView, setActiveView] = React.useState('passwords');
+
+  const renderThemeSwitcher = () => {
+    if (!mounted) {
+      return null;
+    }
+    return (
+      <div className="flex items-center justify-center space-x-2">
+        <Sun className="h-5 w-5" />
+        <Switch
+          id="mobile-theme-switch"
+          checked={theme === 'dark'}
+          onCheckedChange={toggleTheme}
+        />
+        <Moon className="h-5 w-5" />
+      </div>
+    );
+  }
 
   return (
     <SheetContent side="left" className="flex w-64 flex-col p-0">
@@ -254,15 +277,7 @@ const MobileSidebar = () => {
         </SidebarMenu>
       </SidebarContent>
       <SidebarFooter>
-        <div className="flex items-center justify-center space-x-2">
-            <Sun className="h-5 w-5" />
-            <Switch
-              id="mobile-theme-switch"
-              checked={theme === 'dark'}
-              onCheckedChange={toggleTheme}
-            />
-            <Moon className="h-5 w-5" />
-          </div>
+        {renderThemeSwitcher()}
       </SidebarFooter>
     </SheetContent>
   );

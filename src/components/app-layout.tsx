@@ -19,6 +19,7 @@ import ApiKeysSection from '@/components/sections/api-keys';
 import GoogleCodesSection from '@/components/sections/google-codes';
 import BackupSection from '@/components/sections/backup';
 import type { Dispatch, SetStateAction } from 'react';
+import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { Switch } from '@/components/ui/switch';
 
@@ -29,6 +30,11 @@ interface AppLayoutProps {
 
 export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   const { setTheme, theme } = useTheme();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const menuItems = [
     { id: 'passwords', label: 'Passwords', icon: KeyRound },
@@ -56,6 +62,24 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
   
+  const renderThemeSwitcher = () => {
+    if (!mounted) {
+      return null;
+    }
+    return (
+      <div className="flex items-center justify-center space-x-2">
+        <Sun className="h-5 w-5" />
+        <Switch
+          id="theme-switch"
+          checked={theme === 'dark'}
+          onCheckedChange={toggleTheme}
+          aria-label="Toggle theme"
+        />
+        <Moon className="h-5 w-5" />
+      </div>
+    )
+  }
+
   return (
     <SidebarProvider>
       <div className="flex h-screen w-full">
@@ -81,16 +105,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
             </SidebarMenu>
           </SidebarContent>
           <SidebarFooter>
-              <div className="flex items-center justify-center space-x-2">
-                <Sun className="h-5 w-5" />
-                <Switch
-                  id="theme-switch"
-                  checked={theme === 'dark'}
-                  onCheckedChange={toggleTheme}
-                  aria-label="Toggle theme"
-                />
-                <Moon className="h-5 w-5" />
-              </div>
+              {renderThemeSwitcher()}
           </SidebarFooter>
         </Sidebar>
         <SidebarInset>
