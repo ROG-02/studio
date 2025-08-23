@@ -2,13 +2,16 @@
 
 import { useState } from 'react';
 import { AppLayout } from '@/components/app-layout';
+import { ThemeProvider } from '@/components/theme-provider';
 
 export default function Home() {
   const [activeView, setActiveView] = useState('passwords');
 
   return (
-    <main>
-      <AppLayout activeView={activeView} setActiveView={setActiveView} />
-    </main>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <main>
+        <AppLayout activeView={activeView} setActiveView={setActiveView} />
+      </main>
+    </ThemeProvider>
   );
 }

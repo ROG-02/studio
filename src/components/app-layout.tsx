@@ -10,15 +10,19 @@ import {
   SidebarProvider,
   SidebarInset,
   SidebarTrigger,
+  SidebarFooter,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { CitadelGuardLogo, GoogleIcon } from '@/components/icons';
-import { KeyRound, Bot, Save, PanelLeft } from 'lucide-react';
+import { KeyRound, Bot, Save, PanelLeft, Sun, Moon } from 'lucide-react';
 import PasswordsSection from '@/components/sections/passwords';
 import ApiKeysSection from '@/components/sections/api-keys';
 import GoogleCodesSection from '@/components/sections/google-codes';
 import BackupSection from '@/components/sections/backup';
 import type { Dispatch, SetStateAction } from 'react';
+import { useTheme } from 'next-themes';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 interface AppLayoutProps {
   activeView: string;
@@ -26,6 +30,8 @@ interface AppLayoutProps {
 }
 
 export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
+  const { setTheme, theme } = useTheme();
+
   const menuItems = [
     { id: 'passwords', label: 'Passwords', icon: KeyRound },
     { id: 'api-keys', label: 'AI API Keys', icon: Bot },
@@ -47,18 +53,18 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
         return <PasswordsSection />;
     }
   };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
   
   return (
     <SidebarProvider>
       <Sidebar>
         <SidebarHeader>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full">
-              <CitadelGuardLogo className="h-6 w-6 text-primary" />
-            </Button>
-            <div className="flex flex-col">
-              <h2 className="text-lg font-semibold tracking-tight">Citadel Guard</h2>
-            </div>
+            <CitadelGuardLogo className="h-7 w-7 text-primary" />
+            <span className="text-lg font-semibold tracking-tight">Citadel Guard</span>
           </div>
         </SidebarHeader>
         <SidebarContent>
@@ -77,18 +83,29 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
             ))}
           </SidebarMenu>
         </SidebarContent>
+        <SidebarFooter>
+            <div className="flex items-center justify-center space-x-2">
+              <Sun className="h-5 w-5" />
+              <Switch
+                id="theme-switch"
+                checked={theme === 'dark'}
+                onCheckedChange={toggleTheme}
+              />
+              <Moon className="h-5 w-5" />
+            </div>
+        </SidebarFooter>
       </Sidebar>
-      <SidebarInset className="max-h-screen overflow-y-auto">
-        <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:h-16 sm:px-6 md:hidden">
+      <SidebarInset className="max-h-screen overflow-y-auto bg-muted/30">
+        <header className="sticky top-0 z-10 flex h-16 items-center gap-4 border-b bg-background/80 px-4 backdrop-blur-sm sm:px-6 md:hidden">
           <SidebarTrigger>
             <PanelLeft />
           </SidebarTrigger>
           <div className="flex items-center gap-2">
-            <CitadelGuardLogo className="h-6 w-6 text-primary" />
+            <CitadelGuardLogo className="h-7 w-7 text-primary" />
             <h1 className="text-lg font-semibold">Citadel Guard</h1>
           </div>
         </header>
-        <div className="p-4 sm:p-6">{renderActiveView()}</div>
+        <div className="p-4 sm:p-6 lg:p-8">{renderActiveView()}</div>
       </SidebarInset>
     </SidebarProvider>
   );

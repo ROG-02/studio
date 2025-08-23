@@ -44,11 +44,11 @@ export function SidebarProvider({ children }: { children: React.ReactNode }) {
 }
 
 const sidebarVariants = cva(
-  "flex h-full flex-col bg-sidebar transition-all duration-300 ease-in-out",
+  "flex h-full flex-col bg-card transition-all duration-300 ease-in-out",
   {
     variants: {
       isCollapsed: {
-        true: "w-14",
+        true: "w-16",
         false: "w-64",
       },
     },
@@ -71,9 +71,10 @@ export function SidebarHeader({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const { isCollapsed } = useSidebar();
   return (
     <div
-      className={cn("flex h-16 shrink-0 items-center gap-2 border-b px-4", className)}
+      className={cn("flex h-16 shrink-0 items-center gap-2 border-b px-4", isCollapsed && "justify-center", className)}
     >
       {children}
     </div>
@@ -95,8 +96,9 @@ export function SidebarFooter({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
+  const { isCollapsed } = useSidebar();
   return (
-    <div className={cn("mt-auto border-t p-4", className)}>
+    <div className={cn("mt-auto border-t p-2", isCollapsed && "p-1", className)}>
       {children}
     </div>
   )
@@ -121,12 +123,12 @@ export function SidebarMenuItem({
 }
 
 const sidebarMenuButtonVariants = cva(
-  "flex w-full items-center justify-start gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+  "flex w-full items-center justify-start gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ease-in-out",
   {
     variants: {
       isActive: {
-        true: "bg-sidebar-accent text-sidebar-accent-foreground",
-        false: "text-sidebar-foreground hover:bg-sidebar-accent/50",
+        true: "bg-primary text-primary-foreground shadow-sm",
+        false: "text-muted-foreground hover:bg-muted hover:text-foreground",
       },
       isCollapsed: {
         true: "justify-center",
@@ -148,6 +150,8 @@ export function SidebarMenuButton({
 }: ButtonProps & { isActive?: boolean, tooltip?: string }) {
     const { isCollapsed } = useSidebar();
     
+    const content = isCollapsed ? <>{React.Children.toArray(children)[0]}</> : children;
+
     if (isCollapsed) {
         return (
             <Tooltip>
@@ -157,7 +161,7 @@ export function SidebarMenuButton({
                         className={cn(sidebarMenuButtonVariants({ isActive, isCollapsed }), className)}
                         {...props}
                     >
-                        {children}
+                        {content}
                     </Button>
                 </TooltipTrigger>
                 <TooltipContent side="right">
@@ -173,7 +177,7 @@ export function SidebarMenuButton({
             className={cn(sidebarMenuButtonVariants({ isActive, isCollapsed }), className)}
             {...props}
         >
-            {children}
+            {content}
         </Button>
     )
 }
@@ -182,11 +186,12 @@ export function SidebarInset({
   className,
   children,
 }: React.HTMLAttributes<HTMLDivElement>) {
-  const { isCollapsed } = useSidebar()
+  const { isCollapsed, isMobile } = useSidebar()
   return (
     <main
-      className={cn("transition-all duration-300 ease-in-out md:pl-14",
-      !isCollapsed && "md:pl-64", 
+      className={cn("transition-all duration-300 ease-in-out", 
+      !isMobile && "md:pl-16",
+      !isMobile && !isCollapsed && "md:pl-64", 
       className)}
     >
       {children}
