@@ -3,7 +3,23 @@
 import type { Dispatch, SetStateAction } from 'react';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { Sun, Moon } from 'lucide-react';
+import { Sun, Moon, Keyboard } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 import PasswordsSection from '@/components/sections/passwords';
 import AddPasswordSection from '@/components/sections/add-password';
@@ -14,6 +30,7 @@ import { CitadelGuardLogo } from '@/components/icons';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useLocalStorage } from '@/hooks/use-local-storage';
+import { useHotkeys } from '@/hooks/use-hotkeys';
 import type { Password } from '@/lib/types';
 
 interface AppLayoutProps {
@@ -25,6 +42,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
   const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
+  const [isShortcutDialogOpen, setIsShortcutDialogOpen] = useState(false);
 
 
   useEffect(() => {
@@ -32,12 +50,22 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   }, []);
 
   const menuItems = [
-    { id: 'add-password', label: 'Add Password' },
-    { id: 'passwords', label: 'View Passwords' },
-    { id: 'api-keys', label: 'AI Credentials' },
-    { id: 'google-codes', label: 'Backup Codes' },
-    { id: 'backup', label: 'Backup & Restore' },
+    { id: 'add-password', label: 'Add Password', shortcut: 'Alt + N' },
+    { id: 'passwords', label: 'View Passwords', shortcut: 'Alt + V' },
+    { id: 'api-keys', label: 'AI Credentials', shortcut: 'Alt + C' },
+    { id: 'google-codes', label: 'Backup Codes', shortcut: 'Alt + B' },
+    { id: 'backup', label: 'Backup & Restore', shortcut: 'Alt + R' },
   ];
+
+  useHotkeys([
+    ['?', () => setIsShortcutDialogOpen(true)],
+    ['alt+n', () => setActiveView('add-password')],
+    ['alt+v', () => setActiveView('passwords')],
+    ['alt+c', () => setActiveView('api-keys')],
+    ['alt+b', () => setActiveView('google-codes')],
+    ['alt+r', () => setActiveView('backup')],
+  ]);
+
 
   const renderActiveView = () => {
     switch (activeView) {
@@ -79,6 +107,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   };
 
   return (
+    <>
     <div className="flex h-full flex-col">
       <header className="shrink-0 border-b">
         <div className="flex h-16 items-center justify-between bg-background px-4">
@@ -88,7 +117,13 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
                     <h1 className="text-lg font-semibold tracking-tight">Citadel Guard</h1>
                 </div>
             </div>
-            {renderThemeSwitcher()}
+            <div className="flex items-center gap-4">
+              <Button variant="outline" size="icon" onClick={() => setIsShortcutDialogOpen(true)}>
+                <Keyboard className="h-4 w-4" />
+                <span className="sr-only">Keyboard Shortcuts</span>
+              </Button>
+              {renderThemeSwitcher()}
+            </div>
         </div>
         <div className="px-4">
             <Tabs value={activeView} onValueChange={setActiveView} className="h-full space-y-6">
@@ -106,5 +141,42 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
         {renderActiveView()}
       </main>
     </div>
+     <Dialog open={isShortcutDialogOpen} onOpenChange={setIsShortcutDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Keyboard Shortcuts</DialogTitle>
+            <DialogDescription>
+              Use these shortcuts to navigate and use the app more efficiently.
+            </DialogDescription>
+          </DialogHeader>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Action</TableHead>
+                <TableHead className="text-right">Shortcut</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow>
+                <TableCell>Open this dialog</TableCell>
+                <TableCell className="text-right">
+                  <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">?</kbd>
+                </TableCell>
+              </TableRow>
+              {menuItems.map((item) => (
+                <TableRow key={`shortcut-${item.id}`}>
+                  <TableCell>Go to {item.label}</TableCell>
+                  <TableCell className="text-right">
+                     <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground opacity-100">
+                      {item.shortcut}
+                    </kbd>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
