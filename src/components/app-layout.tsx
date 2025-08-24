@@ -50,20 +50,20 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   }, []);
 
   const menuItems = [
-    { id: 'add-password', label: 'Add Password', shortcut: 'Alt + N' },
-    { id: 'passwords', label: 'View Passwords', shortcut: 'Alt + V' },
-    { id: 'api-keys', label: 'AI Credentials', shortcut: 'Alt + C' },
-    { id: 'google-codes', label: 'Backup Codes', shortcut: 'Alt + B' },
-    { id: 'backup', label: 'Backup & Restore', shortcut: 'Alt + R' },
+    { id: 'add-password', label: 'Add Password', shortcut: 'Ctrl + Alt + N' },
+    { id: 'passwords', label: 'View Passwords', shortcut: 'Ctrl + Alt + V' },
+    { id: 'api-keys', label: 'AI Credentials', shortcut: 'Ctrl + Alt + C' },
+    { id: 'google-codes', label: 'Backup Codes', shortcut: 'Ctrl + Alt + B' },
+    { id: 'backup', label: 'Backup & Restore', shortcut: 'Ctrl + Alt + R' },
   ];
 
   useHotkeys([
     ['?', () => setIsShortcutDialogOpen(true)],
-    ['alt+n', () => setActiveView('add-password')],
-    ['alt+v', () => setActiveView('passwords')],
-    ['alt+c', () => setActiveView('api-keys')],
-    ['alt+b', () => setActiveView('google-codes')],
-    ['alt+r', () => setActiveView('backup')],
+    ['ctrl+alt+n', () => setActiveView('add-password')],
+    ['ctrl+alt+v', () => setActiveView('passwords')],
+    ['ctrl+alt+c', () => setActiveView('api-keys')],
+    ['ctrl+alt+b', () => setActiveView('google-codes')],
+    ['ctrl+alt+r', () => setActiveView('backup')],
   ]);
 
 
