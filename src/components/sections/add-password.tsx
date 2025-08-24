@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState } from 'react';
 import type { Password } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -29,16 +29,10 @@ const getCategoryForPlatform = (platformName: string): string => {
     return 'General';
 };
 
-export default function AddPasswordSection({ passwords, setPasswords, setActiveView }: AddPasswordSectionProps) {
+export default function AddPasswordSection({ setPasswords, setActiveView }: AddPasswordSectionProps) {
   const [category, setCategory] = useState('');
-  const [email, setEmail] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const { toast } = useToast();
-  const [isClient, setIsClient] = useState(false);
-
-  useEffect(() => {
-    setIsClient(true);
-  }, []);
 
   const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const platformName = e.target.value;
@@ -62,18 +56,12 @@ export default function AddPasswordSection({ passwords, setPasswords, setActiveV
     toast({ title: 'Password added successfully!' });
     e.currentTarget.reset();
     setCategory('');
-    setEmail('');
     setActiveView('passwords');
   };
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible((prev) => !prev);
   }
-
-  const uniqueEmails = useMemo(() => {
-    const emails = new Set(passwords.map(p => p.email).filter(Boolean));
-    return Array.from(emails);
-  }, [passwords]);
 
   return (
     <Card className="max-w-2xl mx-auto animate-slide-in-from-right">
@@ -99,17 +87,7 @@ export default function AddPasswordSection({ passwords, setPasswords, setActiveV
               type="email" 
               placeholder="e.g. user@example.com" 
               required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)} 
-              list="email-suggestions"
             />
-            <datalist id="email-suggestions">
-              {isClient && uniqueEmails
-                .filter(uniqueEmail => uniqueEmail.toLowerCase().includes(email.toLowerCase()))
-                .map(uniqueEmail => (
-                  <option key={uniqueEmail} value={uniqueEmail} />
-              ))}
-            </datalist>
           </div>
           <div className="space-y-2">
             <Label htmlFor="value">Password</Label>
