@@ -2,7 +2,7 @@
 
 import { useRef, useState } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { AppData, Password, ApiKey, GoogleBackupCode } from '@/lib/types';
+import type { AppData, Password, ApiKey, GoogleBackupCode, StoredGoogleCode } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -12,7 +12,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 export default function BackupSection() {
   const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
   const [apiKeys, setApiKeys] = useLocalStorage<ApiKey[]>('citadel-api-keys', []);
-  const [googleCodes, setGoogleCodes] = useLocalStorage<GoogleBackupCode[]>('citadel-google-codes', []);
+  const [googleCodes, setGoogleCodes] = useLocalStorage<StoredGoogleCode[]>('citadel-google-codes', []);
   const [importedData, setImportedData] = useState<AppData | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -72,7 +72,7 @@ export default function BackupSection() {
 
   return (
     <>
-      <Card>
+      <Card className="animate-slide-in-from-right">
         <CardHeader>
           <CardTitle>Backup & Restore</CardTitle>
           <CardDescription>Export all your data into a single file or restore from a backup.</CardDescription>
