@@ -27,7 +27,7 @@ import ApiKeysSection from '@/components/sections/api-keys';
 import GoogleCodesSection from '@/components/sections/google-codes';
 import BackupSection from '@/components/sections/backup';
 import { CitadelGuardLogo } from '@/components/icons';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import { useHotkeys } from '@/hooks/use-hotkeys';
@@ -72,7 +72,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
       case 'passwords':
         return <PasswordsSection passwords={passwords} setPasswords={setPasswords} />;
       case 'add-password':
-        return <AddPasswordSection setPasswords={setPasswords} setActiveView={setActiveView} />;
+        return <AddPasswordSection passwords={passwords} setPasswords={setPasswords} setActiveView={setActiveView} />;
       case 'api-keys':
         return <ApiKeysSection />;
       case 'google-codes':
@@ -80,7 +80,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
       case 'backup':
         return <BackupSection />;
       default:
-        return <AddPasswordSection setPasswords={setPasswords} setActiveView={setActiveView} />;
+        return <AddPasswordSection passwords={passwords} setPasswords={setPasswords} setActiveView={setActiveView} />;
     }
   };
 
@@ -113,7 +113,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
         <div className="flex h-16 items-center justify-between bg-background px-4">
             <div className='flex items-center gap-4'>
                 <div className="flex items-center gap-2">
-                    <CitadelGuardLogo className="h-7 w-7 text-primary" />
+                    <CitadelGuardLogo className="h-7 w-7" />
                     <h1 className="text-lg font-semibold tracking-tight">Citadel Guard</h1>
                 </div>
             </div>
@@ -137,7 +137,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
             </Tabs>
         </div>
       </header>
-      <main className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-6 lg:p-8">
+      <main className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-6 lg:p-8 animate-fade-in">
         {renderActiveView()}
       </main>
     </div>

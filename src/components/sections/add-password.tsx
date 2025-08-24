@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import type { Password } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, PlusCircle } from 'lucide-react';
 
 interface AddPasswordSectionProps {
+  passwords: Password[];
   setPasswords: React.Dispatch<React.SetStateAction<Password[]>>;
   setActiveView: (view: string) => void;
 }
@@ -28,8 +29,9 @@ const getCategoryForPlatform = (platformName: string): string => {
     return 'General';
 };
 
-export default function AddPasswordSection({ setPasswords, setActiveView }: AddPasswordSectionProps) {
+export default function AddPasswordSection({ passwords, setPasswords, setActiveView }: AddPasswordSectionProps) {
   const [category, setCategory] = useState('');
+  const [email, setEmail] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const { toast } = useToast();
 
@@ -55,6 +57,7 @@ export default function AddPasswordSection({ setPasswords, setActiveView }: AddP
     toast({ title: 'Password added successfully!' });
     e.currentTarget.reset();
     setCategory('');
+    setEmail('');
     setActiveView('passwords');
   };
 
@@ -62,8 +65,13 @@ export default function AddPasswordSection({ setPasswords, setActiveView }: AddP
     setIsPasswordVisible((prev) => !prev);
   }
 
+  const uniqueEmails = useMemo(() => {
+    const emails = new Set(passwords.map(p => p.email).filter(Boolean));
+    return Array.from(emails);
+  }, [passwords]);
+
   return (
-    <Card className="max-w-2xl mx-auto">
+    <Card className="max-w-2xl mx-auto animate-slide-in-from-right">
       <CardHeader>
         <CardTitle>Add a New Password</CardTitle>
         <CardDescription>Fill in the details below to save a new password.</CardDescription>
@@ -80,7 +88,23 @@ export default function AddPasswordSection({ setPasswords, setActiveView }: AddP
           </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
-            <Input id="email" name="email" type="email" placeholder="e.g. user@example.com" required />
+            <Input 
+              id="email" 
+              name="email" 
+              type="email" 
+              placeholder="e.g. user@example.com" 
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)} 
+              list="email-suggestions"
+            />
+            <datalist id="email-suggestions">
+              {uniqueEmails
+                .filter(uniqueEmail => uniqueEmail.toLowerCase().includes(email.toLowerCase()))
+                .map(uniqueEmail => (
+                  <option key={uniqueEmail} value={uniqueEmail} />
+              ))}
+            </datalist>
           </div>
           <div className="space-y-2">
             <Label htmlFor="value">Password</Label>

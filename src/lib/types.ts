@@ -15,8 +15,15 @@ export interface ApiKey {
 
 export type GoogleBackupCode = string;
 
+export interface StoredGoogleCode {
+    id: string;
+    platform: string;
+    email: string;
+    codes: GoogleBackupCode[];
+}
+
 export interface AppData {
   passwords: Password[];
   apiKeys: ApiKey[];
-  googleCodes: GoogleBackupCode[];
+  googleCodes: StoredGoogleCode[];
 }

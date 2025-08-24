@@ -52,7 +52,10 @@ export default function ApiKeysSection() {
 
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard!' });
+    toast({ title: 'Copied to clipboard!', description: 'Content will be cleared in 30 seconds.'});
+    setTimeout(() => {
+        navigator.clipboard.writeText(' ');
+    }, 30000);
   }
 
   const openDialog = (apiKey: ApiKey | null) => {
@@ -61,19 +64,113 @@ export default function ApiKeysSection() {
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle>AI API Key Manager</CardTitle>
-            <CardDescription>Securely store and manage your AI provider API keys.</CardDescription>
-          </div>
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button onClick={() => openDialog(null)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New
-              </Button>
-            </DialogTrigger>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-slide-in-from-right">
+      <div className="md:col-span-2">
+        <Card>
+          <CardHeader>
+             <CardTitle>AI Credentials</CardTitle>
+             <CardDescription>Securely store and manage your AI provider API keys.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {apiKeys.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Service</TableHead>
+                    <TableHead>API Key</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {apiKeys.map((k) => (
+                    <TableRow key={k.id} onDoubleClick={() => openDialog(k)} className="cursor-pointer">
+                      <TableCell className="font-medium">{k.name}</TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono">
+                            {visibleApiKeys[k.id] ? k.value : '••••••••••••••••••••••••'}
+                          </span>
+                          <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); toggleVisibility(k.id)}} aria-label={visibleApiKeys[k.id] ? "Hide API Key" : "Show API Key"}>
+                            {visibleApiKeys[k.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={(e) => {e.stopPropagation(); copyToClipboard(k.value)}} aria-label="Copy API Key">
+                            <Copy className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent>
+                            <DropdownMenuItem onClick={() => openDialog(k)}>
+                              <Pencil className="mr-2 h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                  <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete
+                                </DropdownMenuItem>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                  <AlertDialogDescription>This action cannot be undone. This will permanently delete this API key.</AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction onClick={() => handleDelete(k.id)}>Delete</AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center text-muted-foreground py-12">
+                <p>No API keys saved yet.</p>
+                <p>Use the form to add a new one.</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <div>
+        <Card>
+          <CardHeader>
+            <CardTitle>{currentApiKey ? 'Edit API Key' : 'Add New API Key'}</CardTitle>
+          </CardHeader>
+          <CardContent>
+             <form onSubmit={handleSave}>
+                <div className="grid gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Service</Label>
+                    <Input id="name" name="name" placeholder="e.g. OpenAI" defaultValue={currentApiKey?.name} required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="value">API Key</Label>
+                    <Input id="value" name="value" type="password" defaultValue={currentApiKey?.value} required />
+                  </div>
+                </div>
+                <div className="flex justify-end mt-6">
+                    <Button type="submit">
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        {currentApiKey ? 'Save Changes' : 'Add Key'}
+                    </Button>
+                </div>
+              </form>
+          </CardContent>
+        </Card>
+      </div>
+
+       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogContent className="sm:max-w-[425px]">
               <DialogHeader>
                 <DialogTitle>{currentApiKey ? 'Edit API Key' : 'Add New API Key'}</DialogTitle>
@@ -81,94 +178,24 @@ export default function ApiKeysSection() {
               <form onSubmit={handleSave}>
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="name" className="text-right">Service</Label>
-                    <Input id="name" name="name" defaultValue={currentApiKey?.name} className="col-span-3" required />
+                    <Label htmlFor="edit-name" className="text-right">Service</Label>
+                    <Input id="edit-name" name="name" defaultValue={currentApiKey?.name} className="col-span-3" required />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="value" className="text-right">API Key</Label>
-                    <Input id="value" name="value" type="password" defaultValue={currentApiKey?.value} className="col-span-3" required />
+                    <Label htmlFor="edit-value" className="text-right">API Key</Label>
+                    <Input id="edit-value" name="value" type="password" defaultValue={currentApiKey?.value} className="col-span-3" required />
                   </div>
                 </div>
                 <DialogFooter>
                   <DialogClose asChild>
                     <Button type="button" variant="secondary">Cancel</Button>
                   </DialogClose>
-                  <Button type="submit">Save</Button>
+                  <Button type="submit">Save Changes</Button>
                 </DialogFooter>
               </form>
             </DialogContent>
           </Dialog>
-        </div>
-      </CardHeader>
-      <CardContent>
-        {apiKeys.length > 0 ? (
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Service</TableHead>
-                <TableHead>API Key</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {apiKeys.map((k) => (
-                <TableRow key={k.id}>
-                  <TableCell className="font-medium">{k.name}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono">
-                        {visibleApiKeys[k.id] ? k.value : '••••••••••••••••••••••••'}
-                      </span>
-                      <Button variant="ghost" size="icon" onClick={() => toggleVisibility(k.id)} aria-label={visibleApiKeys[k.id] ? "Hide API Key" : "Show API Key"}>
-                        {visibleApiKeys[k.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(k.value)} aria-label="Copy API Key">
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent>
-                        <DropdownMenuItem onClick={() => openDialog(k)}>
-                          <Pencil className="mr-2 h-4 w-4" /> Edit
-                        </DropdownMenuItem>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
-                              <Trash2 className="mr-2 h-4 w-4 text-destructive" /> Delete
-                            </DropdownMenuItem>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>This action cannot be undone. This will permanently delete this API key.</AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={() => handleDelete(k.id)}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        ) : (
-          <div className="text-center text-muted-foreground py-12">
-            <p>No API keys saved yet.</p>
-            <p>Click "Add New" to get started.</p>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+
+    </div>
   );
 }

@@ -81,7 +81,8 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     toast({ title: `${ids.length} password(s) deleted.`, variant: 'destructive' });
   };
 
-  const toggleVisibility = (id: string) => {
+  const toggleVisibility = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
@@ -89,9 +90,13 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     setIsEditPasswordVisible((prev) => !prev);
   }
   
-  const copyToClipboard = (text: string) => {
+  const copyToClipboard = (text: string, e: React.MouseEvent) => {
+    e.stopPropagation();
     navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard!' });
+    toast({ title: 'Copied to clipboard!', description: 'Content will be cleared in 30 seconds.' });
+    setTimeout(() => {
+        navigator.clipboard.writeText(' ');
+    }, 30000);
   }
 
   const openDialog = (password: Password) => {
@@ -156,6 +161,10 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
   }
 
   const handleExport = () => {
+    if(passwords.length === 0) {
+      toast({ title: 'No passwords to export.', variant: 'destructive'});
+      return;
+    }
     const dataStr = JSON.stringify(passwords, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
@@ -181,8 +190,9 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
           const imported = JSON.parse(content) as Password[];
           // Basic validation
           if (Array.isArray(imported) && imported.every(p => p.id && p.name && p.value && p.email)) {
-            setPasswords(prev => [...prev, ...imported.filter(ip => !prev.some(pp => pp.id === ip.id))]);
-            toast({ title: `${imported.length} passwords imported successfully.` });
+             const uniqueImported = imported.filter(ip => !passwords.some(pp => pp.id === ip.id));
+             setPasswords(prev => [...prev, ...uniqueImported]);
+            toast({ title: `${uniqueImported.length} new passwords imported successfully.` });
           } else {
             throw new Error('Invalid file format.');
           }
@@ -199,7 +209,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
 
 
   return (
-    <>
+    <div className="animate-slide-in-from-right">
       <Card>
         <CardHeader>
           <div className="flex justify-between items-start">
@@ -235,7 +245,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
               </CardContent>
           </Card>
           
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
              <Button variant="outline" onClick={handleEditSelected} disabled={selectedPasswords.length !== 1}>
                 <Edit/> Edit Selected
             </Button>
@@ -269,7 +279,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead padding="checkbox">
+                  <TableHead className="w-[50px]">
                     <Checkbox
                         checked={selectedPasswords.length === filteredPasswords.length && filteredPasswords.length > 0}
                         onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
@@ -285,8 +295,13 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
               </TableHeader>
               <TableBody>
                 {filteredPasswords.map((p) => (
-                  <TableRow key={p.id} data-state={selectedPasswords.includes(p.id) && "selected"}>
-                    <TableCell padding="checkbox">
+                  <TableRow 
+                    key={p.id} 
+                    data-state={selectedPasswords.includes(p.id) && "selected"}
+                    onDoubleClick={() => openDialog(p)}
+                    className="cursor-pointer"
+                  >
+                    <TableCell onClick={(e) => e.stopPropagation()}>
                         <Checkbox
                             checked={selectedPasswords.includes(p.id)}
                             onCheckedChange={(checked) => handleSelectRow(p.id, checked as boolean)}
@@ -303,10 +318,10 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
                         <span className="font-mono">
                           {visiblePasswords[p.id] ? p.value : '••••••••••••'}
                         </span>
-                        <Button variant="ghost" size="icon" onClick={() => toggleVisibility(p.id)} aria-label={visiblePasswords[p.id] ? "Hide password" : "Show password"}>
+                        <Button variant="ghost" size="icon" onClick={(e) => toggleVisibility(p.id, e)} aria-label={visiblePasswords[p.id] ? "Hide password" : "Show password"}>
                           {visiblePasswords[p.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </Button>
-                         <Button variant="ghost" size="icon" onClick={() => copyToClipboard(p.value)} aria-label="Copy password">
+                         <Button variant="ghost" size="icon" onClick={(e) => copyToClipboard(p.value, e)} aria-label="Copy password">
                           <Copy className="h-4 w-4" />
                         </Button>
                       </div>
@@ -314,7 +329,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
+                          <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
                             <MoreHorizontal className="h-4 w-4" />
                             <span className="sr-only">More actions</span>
                           </Button>
@@ -348,7 +363,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
               </TableBody>
             </Table>
           ) : (
-            <div className="text-center text-muted-foreground py-12">
+            <div className="text-center text-muted-foreground py-12 border-2 border-dashed rounded-lg">
               <p>No passwords found matching your criteria.</p>
               <p>Try adjusting your search or add a new password.</p>
             </div>
@@ -401,6 +416,6 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
           </form>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }

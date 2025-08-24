@@ -4,57 +4,57 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%; /* Light Cool Gray */
-    --foreground: 222 47% 11%; /* Dark Slate Blue */
-    --card: 210 40% 100%;
-    --card-foreground: 222 47% 11%;
-    --popover: 210 40% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 221 83% 53%; /* Royal Blue */
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222 47% 11%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 350 78% 59%; /* Bright Coral */
-    --accent-foreground: 210 40% 98%;
+    --background: 270 30% 98%; /* Lighter, desaturated purple */
+    --foreground: 270 20% 15%;
+    --card: 270 30% 100%;
+    --card-foreground: 270 20% 15%;
+    --popover: 270 30% 100%;
+    --popover-foreground: 270 20% 15%;
+    --primary: 263 56% 54%; /* Deep Purple (#673AB7) */
+    --primary-foreground: 300 10% 98%;
+    --secondary: 270 30% 96%;
+    --secondary-foreground: 270 20% 25%;
+    --muted: 270 30% 96%;
+    --muted-foreground: 270 10% 60%;
+    --accent: 187 100% 42%; /* Cyan (#00BCD4) */
+    --accent-foreground: 270 10% 98%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214 32% 91%;
-    --input: 214 32% 91%;
-    --ring: 221 83% 53%;
+    --border: 270 20% 88%;
+    --input: 270 20% 92%;
+    --ring: 263 56% 54%;
     --radius: 0.75rem;
 
-    --chart-1: 221 83% 53%;
-    --chart-2: 160 60% 45%;
+    --chart-1: 263 56% 54%;
+    --chart-2: 187 100% 42%;
     --chart-3: 30 80% 55%;
     --chart-4: 280 65% 60%;
     --chart-5: 350 78% 59%;
   }
 
   .dark {
-    --background: 222 47% 11%; /* Dark Slate Blue */
-    --foreground: 210 40% 98%; /* Light Cool Gray */
-    --card: 222 47% 15%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217 91% 60%; /* Brighter Blue for Dark Mode */
-    --primary-foreground: 222 47% 11%;
-    --secondary: 217 33% 20%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217 33% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 350 88% 70%; /* Lighter Coral for Dark Mode */
-    --accent-foreground: 222 47% 11%;
+    --background: 264 40% 10%; /* Very dark purple */
+    --foreground: 270 20% 95%;
+    --card: 264 40% 14%;
+    --card-foreground: 270 20% 95%;
+    --popover: 264 40% 10%;
+    --popover-foreground: 270 20% 95%;
+    --primary: 263 66% 64%; /* Brighter Purple */
+    --primary-foreground: 264 40% 10%;
+    --secondary: 264 30% 20%;
+    --secondary-foreground: 270 20% 95%;
+    --muted: 264 30% 20%;
+    --muted-foreground: 270 10% 60%;
+    --accent: 187 90% 60%; /* Brighter Cyan */
+    --accent-foreground: 264 40% 10%;
     --destructive: 0 63% 31%;
     --destructive-foreground: 210 40% 98%;
-    --border: 217 33% 25%;
-    --input: 217 33% 25%;
-    --ring: 217 91% 60%;
+    --border: 264 30% 25%;
+    --input: 264 30% 25%;
+    --ring: 263 66% 64%;
 
-    --chart-1: 217 91% 60%;
-    --chart-2: 160 70% 50%;
+    --chart-1: 263 66% 64%;
+    --chart-2: 187 90% 60%;
     --chart-3: 40 90% 60%;
     --chart-4: 280 75% 65%;
     --chart-5: 350 88% 70%;
