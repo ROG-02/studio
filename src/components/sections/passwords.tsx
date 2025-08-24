@@ -1,18 +1,19 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import type { Password } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy, Search } from 'lucide-react';
+import { MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy, Search, RefreshCw, Upload, Download, Edit, Trash } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { Checkbox } from '@/components/ui/checkbox';
 
 interface PasswordsSectionProps {
   passwords: Password[];
@@ -43,7 +44,10 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
   const [searchTerm, setSearchTerm] = useState('');
   const [platformFilter, setPlatformFilter] = useState('');
   const [tagFilter, setTagFilter] = useState('');
+  const [selectedPasswords, setSelectedPasswords] = useState<string[]>([]);
   const { toast } = useToast();
+  const importFileInputRef = useRef<HTMLInputElement>(null);
+
 
   const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const platformName = e.target.value;
@@ -71,9 +75,10 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     setCategory('');
   };
   
-  const handleDelete = (id: string) => {
-    setPasswords(passwords.filter((p) => p.id !== id));
-    toast({ title: 'Password deleted.', variant: 'destructive' });
+  const handleDelete = (ids: string[]) => {
+    setPasswords(passwords.filter((p) => !ids.includes(p.id)));
+    setSelectedPasswords([]);
+    toast({ title: `${ids.length} password(s) deleted.`, variant: 'destructive' });
   };
 
   const toggleVisibility = (id: string) => {
@@ -115,6 +120,84 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     )
   });
 
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedPasswords(filteredPasswords.map(p => p.id));
+    } else {
+      setSelectedPasswords([]);
+    }
+  }
+
+  const handleSelectRow = (id: string, checked: boolean) => {
+    if (checked) {
+      setSelectedPasswords(prev => [...prev, id]);
+    } else {
+      setSelectedPasswords(prev => prev.filter(pid => pid !== id));
+    }
+  }
+
+  const handleEditSelected = () => {
+    if (selectedPasswords.length !== 1) {
+      toast({ title: 'Please select exactly one password to edit.', variant: 'destructive'});
+      return;
+    }
+    const passwordToEdit = passwords.find(p => p.id === selectedPasswords[0]);
+    if (passwordToEdit) {
+      openDialog(passwordToEdit);
+    }
+  }
+
+  const handleRefresh = () => {
+    setSearchTerm('');
+    setPlatformFilter('');
+    setTagFilter('');
+    setSelectedPasswords([]);
+    toast({ title: 'Filters cleared and list refreshed.'});
+  }
+
+  const handleExport = () => {
+    const dataStr = JSON.stringify(passwords, null, 2);
+    const dataBlob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(dataBlob);
+    const link = document.createElement('a');
+    link.download = 'passwords-export.json';
+    link.href = url;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast({ title: 'All passwords exported successfully.' });
+  }
+
+  const handleImportClick = () => {
+    importFileInputRef.current?.click();
+  }
+
+  const handleImport = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const content = e.target?.result as string;
+          const imported = JSON.parse(content) as Password[];
+          // Basic validation
+          if (Array.isArray(imported) && imported.every(p => p.id && p.name && p.value && p.email)) {
+            setPasswords(prev => [...prev, ...imported.filter(ip => !prev.some(pp => pp.id === ip.id))]);
+            toast({ title: `${imported.length} passwords imported successfully.` });
+          } else {
+            throw new Error('Invalid file format.');
+          }
+        } catch (error) {
+          toast({ title: 'Import failed.', description: 'The file is not a valid password JSON export.', variant: 'destructive' });
+        }
+      };
+      reader.readAsText(file);
+    }
+    if (importFileInputRef.current) {
+        importFileInputRef.current.value = "";
+    }
+  }
+
+
   return (
     <>
       <Card>
@@ -151,11 +234,48 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
                   </div>
               </CardContent>
           </Card>
+          
+          <div className="flex items-center gap-2 mb-4">
+             <Button variant="outline" onClick={handleEditSelected} disabled={selectedPasswords.length !== 1}>
+                <Edit/> Edit Selected
+            </Button>
+            <AlertDialog>
+                <AlertDialogTrigger asChild>
+                    <Button variant="destructive" disabled={selectedPasswords.length === 0}>
+                        <Trash/> Delete Selected
+                    </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>This will permanently delete {selectedPasswords.length} selected password(s). This action cannot be undone.</AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDelete(selectedPasswords)}>Delete</AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
+
+            <Button variant="outline" onClick={handleExport}><Download/> Export All (JSON)</Button>
+            
+            <input type="file" ref={importFileInputRef} onChange={handleImport} accept=".json" className="hidden" />
+            <Button variant="outline" onClick={handleImportClick}><Upload/> Import (JSON)</Button>
+
+            <Button variant="outline" onClick={handleRefresh}><RefreshCw/> Refresh</Button>
+          </div>
 
           {filteredPasswords.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
+                  <TableHead padding="checkbox">
+                    <Checkbox
+                        checked={selectedPasswords.length === filteredPasswords.length && filteredPasswords.length > 0}
+                        onCheckedChange={(checked) => handleSelectAll(checked as boolean)}
+                        aria-label="Select all"
+                    />
+                  </TableHead>
                   <TableHead>Platform</TableHead>
                   <TableHead>Category</TableHead>
                   <TableHead>Email/Username</TableHead>
@@ -165,7 +285,14 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
               </TableHeader>
               <TableBody>
                 {filteredPasswords.map((p) => (
-                  <TableRow key={p.id}>
+                  <TableRow key={p.id} data-state={selectedPasswords.includes(p.id) && "selected"}>
+                    <TableCell padding="checkbox">
+                        <Checkbox
+                            checked={selectedPasswords.includes(p.id)}
+                            onCheckedChange={(checked) => handleSelectRow(p.id, checked as boolean)}
+                            aria-label="Select row"
+                        />
+                    </TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                      <TableCell>
                       <Badge variant="secondary">{p.category || 'General'}</Badge>
@@ -209,7 +336,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(p.id)} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
+                                <AlertDialogAction onClick={() => handleDelete([p.id])} className="bg-destructive hover:bg-destructive/90">Delete</AlertDialogAction>
                               </AlertDialogFooter>
                             </AlertDialogContent>
                           </AlertDialog>
