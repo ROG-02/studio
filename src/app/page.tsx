@@ -9,7 +9,7 @@ export default function Home() {
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <main>
+      <main className="h-screen flex flex-col">
         <AppLayout activeView={activeView} setActiveView={setActiveView} />
       </main>
     </ThemeProvider>

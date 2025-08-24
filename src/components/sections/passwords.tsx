@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy, Search } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 
@@ -36,6 +36,9 @@ export default function PasswordsSection() {
   const [currentPassword, setCurrentPassword] = useState<Password | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [category, setCategory] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [platformFilter, setPlatformFilter] = useState('');
+  const [tagFilter, setTagFilter] = useState('');
   const { toast } = useToast();
 
   const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,13 +97,26 @@ export default function PasswordsSection() {
     setCategory('');
   }
 
+  const filteredPasswords = passwords.filter(p => {
+    const searchTermLower = searchTerm.toLowerCase();
+    const platformFilterLower = platformFilter.toLowerCase();
+    const categoryFilterLower = tagFilter.toLowerCase(); // Using 'tag' filter for category
+    return (
+        (p.name.toLowerCase().includes(searchTermLower) || 
+         (p.username && p.username.toLowerCase().includes(searchTermLower)) || 
+         p.email.toLowerCase().includes(searchTermLower)) &&
+        p.name.toLowerCase().includes(platformFilterLower) &&
+        (p.category && p.category.toLowerCase().includes(categoryFilterLower))
+    )
+  });
+
   return (
     <Card>
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
             <CardTitle>Password Manager</CardTitle>
-            <CardDescription>Securely store and manage your passwords.</CardDescription>
+            <CardDescription>Securely store, manage, and search your passwords.</CardDescription>
           </div>
           <Dialog open={isDialogOpen} onOpenChange={(open) => {
             if (open) setIsDialogOpen(true);
@@ -108,7 +124,7 @@ export default function PasswordsSection() {
           }}>
             <DialogTrigger asChild>
               <Button onClick={() => openDialog(null)}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add New
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Password
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
@@ -150,7 +166,32 @@ export default function PasswordsSection() {
         </div>
       </CardHeader>
       <CardContent>
-        {passwords.length > 0 ? (
+        <Card className='mb-6'>
+            <CardHeader>
+                <CardTitle className='text-base'>Search & Filter</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="search" className="shrink-0">Search:</Label>
+                        <div className="relative w-full">
+                           <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                           <Input id="search" placeholder="Search..." className="pl-8" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="platform" className="shrink-0">Platform:</Label>
+                        <Input id="platform" placeholder="Filter by platform..." value={platformFilter} onChange={e => setPlatformFilter(e.target.value)} />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Label htmlFor="tags" className="shrink-0">Tags:</Label>
+                        <Input id="tags" placeholder="Filter by category..." value={tagFilter} onChange={e => setTagFilter(e.target.value)} />
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+
+        {filteredPasswords.length > 0 ? (
           <Table>
             <TableHeader>
               <TableRow>
@@ -162,7 +203,7 @@ export default function PasswordsSection() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {passwords.map((p) => (
+              {filteredPasswords.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.name}</TableCell>
                    <TableCell>
@@ -220,8 +261,8 @@ export default function PasswordsSection() {
           </Table>
         ) : (
           <div className="text-center text-muted-foreground py-12">
-            <p>No passwords saved yet.</p>
-            <p>Click "Add New" to get started.</p>
+            <p>No passwords found matching your criteria.</p>
+            <p>Try adjusting your search or add a new password.</p>
           </div>
         )}
       </CardContent>
