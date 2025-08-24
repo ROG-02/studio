@@ -6,6 +6,7 @@ import { useTheme } from 'next-themes';
 import { Sun, Moon } from 'lucide-react';
 
 import PasswordsSection from '@/components/sections/passwords';
+import AddPasswordSection from '@/components/sections/add-password';
 import ApiKeysSection from '@/components/sections/api-keys';
 import GoogleCodesSection from '@/components/sections/google-codes';
 import BackupSection from '@/components/sections/backup';
@@ -13,6 +14,8 @@ import { CitadelGuardLogo } from '@/components/icons';
 import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from '@/components/ui/menubar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
+import { useLocalStorage } from '@/hooks/use-local-storage';
+import type { Password } from '@/lib/types';
 
 interface AppLayoutProps {
   activeView: string;
@@ -22,6 +25,8 @@ interface AppLayoutProps {
 export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
+
 
   useEffect(() => {
     setMounted(true);
@@ -29,6 +34,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
 
   const menuItems = [
     { id: 'passwords', label: 'View Passwords' },
+    { id: 'add-password', label: 'Add Password' },
     { id: 'api-keys', label: 'AI Credentials' },
     { id: 'google-codes', label: 'Backup Codes' },
     { id: 'backup', label: 'Backup & Restore' },
@@ -37,7 +43,9 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   const renderActiveView = () => {
     switch (activeView) {
       case 'passwords':
-        return <PasswordsSection />;
+        return <PasswordsSection passwords={passwords} setPasswords={setPasswords} />;
+      case 'add-password':
+        return <AddPasswordSection setPasswords={setPasswords} setActiveView={setActiveView} />;
       case 'api-keys':
         return <ApiKeysSection />;
       case 'google-codes':
@@ -45,7 +53,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
       case 'backup':
         return <BackupSection />;
       default:
-        return <PasswordsSection />;
+        return <PasswordsSection passwords={passwords} setPasswords={setPasswords} />;
     }
   };
 
