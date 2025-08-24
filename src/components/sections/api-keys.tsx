@@ -11,7 +11,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { PlusCircle, MoreHorizontal, Eye, EyeOff, Trash2, Pencil } from 'lucide-react';
+import { PlusCircle, MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export default function ApiKeysSection() {
@@ -49,6 +49,11 @@ export default function ApiKeysSection() {
   const toggleVisibility = (id: string) => {
     setVisibleApiKeys((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    toast({ title: 'Copied to clipboard!' });
+  }
 
   const openDialog = (apiKey: ApiKey | null) => {
     setCurrentApiKey(apiKey);
@@ -114,8 +119,11 @@ export default function ApiKeysSection() {
                       <span className="font-mono">
                         {visibleApiKeys[k.id] ? k.value : '••••••••••••••••••••••••'}
                       </span>
-                      <Button variant="ghost" size="icon" onClick={() => toggleVisibility(k.id)}>
+                      <Button variant="ghost" size="icon" onClick={() => toggleVisibility(k.id)} aria-label={visibleApiKeys[k.id] ? "Hide API Key" : "Show API Key"}>
                         {visibleApiKeys[k.id] ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => copyToClipboard(k.value)} aria-label="Copy API Key">
+                        <Copy className="h-4 w-4" />
                       </Button>
                     </div>
                   </TableCell>

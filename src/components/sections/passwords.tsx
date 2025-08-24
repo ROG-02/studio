@@ -38,6 +38,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [currentPassword, setCurrentPassword] = useState<Password | null>(null);
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
+  const [isEditPasswordVisible, setIsEditPasswordVisible] = useState(false);
   const [category, setCategory] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [platformFilter, setPlatformFilter] = useState('');
@@ -78,6 +79,10 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
   const toggleVisibility = (id: string) => {
     setVisiblePasswords((prev) => ({ ...prev, [id]: !prev[id] }));
   };
+
+  const toggleEditPasswordVisibility = () => {
+    setIsEditPasswordVisible((prev) => !prev);
+  }
   
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
@@ -87,6 +92,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
   const openDialog = (password: Password) => {
     setCurrentPassword(password);
     setCategory(password.category || '');
+    setIsEditPasswordVisible(false);
     setIsDialogOpen(true);
   };
 
@@ -247,7 +253,12 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="value" className="text-right">Password</Label>
-                <Input id="value" name="value" type="password" defaultValue={currentPassword?.value} className="col-span-3" required />
+                <div className="relative col-span-3">
+                    <Input id="value" name="value" type={isEditPasswordVisible ? 'text' : 'password'} defaultValue={currentPassword?.value} required />
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={toggleEditPasswordVisibility}>
+                        {isEditPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </Button>
+                </div>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <Label htmlFor="category" className="text-right">Category</Label>

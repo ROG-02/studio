@@ -1,28 +1,22 @@
 'use client';
 
-import { useRef, useState, useTransition } from 'react';
+import { useRef, useState } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
 import type { AppData, Password, ApiKey, GoogleBackupCode } from '@/lib/types';
-import { analyzeBackupReasoning } from '@/ai/flows/analyze-backup-reasoning';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Download, ShieldCheck, FileWarning, Loader2 } from 'lucide-react';
+import { Upload, Download, ShieldCheck } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogClose } from '@/components/ui/dialog';
-import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 
 export default function BackupSection() {
   const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
   const [apiKeys, setApiKeys] = useLocalStorage<ApiKey[]>('citadel-api-keys', []);
-  const [googleCodes, setGoogleCodes] = useLocalStorage<string[]>('citadel-google-codes', []);
+  const [googleCodes, setGoogleCodes] = useLocalStorage<GoogleBackupCode[]>('citadel-google-codes', []);
+  const [importedData, setImportedData] = useState<AppData | null>(null);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [isAnalyzing, startAnalyzing] = useTransition();
-  const [analysisResult, setAnalysisResult] = useState<{ manualDecryptionRequired: boolean; reasoning: string } | null>(null);
-  const [importedData, setImportedData] = useState<string | null>(null);
 
   const handleExport = () => {
     const appData: AppData = { passwords, apiKeys, googleCodes };
@@ -48,18 +42,18 @@ export default function BackupSection() {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setImportedData(content);
-        startAnalyzing(async () => {
-          try {
-            const result = await analyzeBackupReasoning({ backupFileContent: content });
-            setAnalysisResult(result);
-          } catch (error) {
-            console.error(error);
-            toast({ title: 'AI analysis failed.', description: 'Proceeding without AI insights.', variant: 'destructive' });
-            setAnalysisResult({manualDecryptionRequired: false, reasoning: 'AI analysis failed. Please manually verify the file content.'});
+        try {
+          const content = e.target?.result as string;
+          const data = JSON.parse(content) as AppData;
+          // Basic validation
+          if (Array.isArray(data.passwords) && Array.isArray(data.apiKeys) && Array.isArray(data.googleCodes)) {
+            setImportedData(data);
+          } else {
+            throw new Error('Invalid backup file format.');
           }
-        });
+        } catch (error) {
+           toast({ title: 'Import failed.', description: 'The selected file is not a valid backup file.', variant: 'destructive' });
+        }
       };
       reader.readAsText(file);
     }
@@ -69,23 +63,11 @@ export default function BackupSection() {
 
   const proceedWithImport = () => {
     if (!importedData) return;
-    try {
-      const dataToImport = JSON.parse(importedData) as AppData;
-      // Basic validation
-      if (Array.isArray(dataToImport.passwords) && Array.isArray(dataToImport.apiKeys) && Array.isArray(dataToImport.googleCodes)) {
-        setPasswords(dataToImport.passwords);
-        setApiKeys(dataToImport.apiKeys);
-        setGoogleCodes(dataToImport.googleCodes as GoogleBackupCode[]);
-        toast({ title: 'Data restored successfully!' });
-      } else {
-        throw new Error('Invalid backup file format.');
-      }
-    } catch (error) {
-      toast({ title: 'Import failed.', description: 'The selected file is not a valid backup file.', variant: 'destructive' });
-    } finally {
-        setAnalysisResult(null);
-        setImportedData(null);
-    }
+    setPasswords(importedData.passwords);
+    setApiKeys(importedData.apiKeys);
+    setGoogleCodes(importedData.googleCodes);
+    toast({ title: 'Data restored successfully!' });
+    setImportedData(null);
   };
 
   return (
@@ -116,7 +98,7 @@ export default function BackupSection() {
                         <AlertDialogHeader>
                           <AlertDialogTitle className="flex items-center gap-2"><ShieldCheck/> Manual Encryption (Optional)</AlertDialogTitle>
                           <AlertDialogDescription>
-                            For enhanced security, you can manually encrypt the backup file using an external tool like GPG or VeraCrypt after exporting. Citadel Guard will remind you that manual decryption might be needed upon import.
+                            For enhanced security, you can manually encrypt the backup file using an external tool like GPG or VeraCrypt after exporting.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
                         <AlertDialogFooter>
@@ -138,16 +120,8 @@ export default function BackupSection() {
                         Restore your data from a previously exported backup file. This will overwrite all current data.
                     </p>
                     <input type="file" ref={fileInputRef} onChange={handleFileImport} accept=".json" className="hidden" />
-                    <Button variant="outline" onClick={triggerFileImport} disabled={isAnalyzing}>
-                      {isAnalyzing ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <Upload className="mr-2 h-4 w-4" /> Import from Backup
-                        </>
-                      )}
+                    <Button variant="outline" onClick={triggerFileImport}>
+                      <Upload className="mr-2 h-4 w-4" /> Import from Backup
                     </Button>
                 </CardContent>
             </Card>
@@ -155,56 +129,20 @@ export default function BackupSection() {
         </CardContent>
       </Card>
 
-      <Dialog open={!!analysisResult} onOpenChange={(open) => !open && setAnalysisResult(null)}>
-        <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle className="flex items-center gap-2">
-                    {analysisResult?.manualDecryptionRequired ? <FileWarning className="text-destructive"/> : <ShieldCheck className="text-primary"/>}
-                    AI Backup Analysis
-                </DialogTitle>
-                <DialogDescription>
-                    Our AI has analyzed your backup file. Here's what it found:
-                </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-                <p className="text-sm font-semibold">
-                    Manual Decryption Required: 
-                    <span className={analysisResult?.manualDecryptionRequired ? "text-destructive" : "text-primary"}>
-                        {analysisResult?.manualDecryptionRequired ? ' Yes' : ' No'}
-                    </span>
-                </p>
-                <div>
-                    <Label htmlFor="reasoning">Reasoning:</Label>
-                    <Textarea id="reasoning" readOnly value={analysisResult?.reasoning} className="mt-1 h-32 bg-muted/50" />
-                </div>
-                <p className="text-xs text-muted-foreground">
-                    Note: This analysis is suggestive. Always ensure you handle encrypted files correctly.
-                </p>
-            </div>
-            <DialogFooter>
-                <DialogClose asChild>
-                    <Button type="button" variant="secondary">Cancel</Button>
-                </DialogClose>
-                 <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                       <Button type="button">Proceed with Import</Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                        <AlertDialogHeader>
-                            <AlertDialogTitle>Overwrite all existing data?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This action cannot be undone. Importing a backup will replace all passwords, API keys, and codes currently stored in the application.
-                            </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={proceedWithImport}>Yes, Overwrite Data</AlertDialogAction>
-                        </AlertDialogFooter>
-                    </AlertDialogContent>
-                </AlertDialog>
-            </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <AlertDialog open={!!importedData} onOpenChange={(open) => !open && setImportedData(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Overwrite all existing data?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. Importing a backup will replace all passwords, API keys, and codes currently stored in the application.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setImportedData(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={proceedWithImport}>Yes, Overwrite Data</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
