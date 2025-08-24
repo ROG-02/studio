@@ -11,7 +11,6 @@ import ApiKeysSection from '@/components/sections/api-keys';
 import GoogleCodesSection from '@/components/sections/google-codes';
 import BackupSection from '@/components/sections/backup';
 import { CitadelGuardLogo } from '@/components/icons';
-import { Menubar, MenubarContent, MenubarItem, MenubarMenu, MenubarSeparator, MenubarTrigger } from '@/components/ui/menubar';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { useLocalStorage } from '@/hooks/use-local-storage';
@@ -33,8 +32,8 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
   }, []);
 
   const menuItems = [
-    { id: 'passwords', label: 'View Passwords' },
     { id: 'add-password', label: 'Add Password' },
+    { id: 'passwords', label: 'View Passwords' },
     { id: 'api-keys', label: 'AI Credentials' },
     { id: 'google-codes', label: 'Backup Codes' },
     { id: 'backup', label: 'Backup & Restore' },
@@ -53,7 +52,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
       case 'backup':
         return <BackupSection />;
       default:
-        return <PasswordsSection passwords={passwords} setPasswords={setPasswords} />;
+        return <AddPasswordSection setPasswords={setPasswords} setActiveView={setActiveView} />;
     }
   };
 
@@ -88,32 +87,6 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
                     <CitadelGuardLogo className="h-7 w-7 text-primary" />
                     <h1 className="text-lg font-semibold tracking-tight">Citadel Guard</h1>
                 </div>
-                 <Menubar>
-                    <MenubarMenu>
-                        <MenubarTrigger>File</MenubarTrigger>
-                        <MenubarContent>
-                        <MenubarItem>New...</MenubarItem>
-                        <MenubarItem>Export...</MenubarItem>
-                        <MenubarSeparator />
-                        <MenubarItem>Exit</MenubarItem>
-                        </MenubarContent>
-                    </MenubarMenu>
-                    <MenubarMenu>
-                        <MenubarTrigger>Settings</MenubarTrigger>
-                         <MenubarContent>
-                            <MenubarItem>Preferences...</MenubarItem>
-                            <MenubarSeparator />
-                            <MenubarItem>Master Password...</MenubarItem>
-                        </MenubarContent>
-                    </MenubarMenu>
-                    <MenubarMenu>
-                        <MenubarTrigger>Help</MenubarTrigger>
-                         <MenubarContent>
-                            <MenubarItem>About</MenubarItem>
-                            <MenubarItem>Check for Updates...</MenubarItem>
-                        </MenubarContent>
-                    </MenubarMenu>
-                </Menubar>
             </div>
             {renderThemeSwitcher()}
         </div>

@@ -5,7 +5,7 @@ import { AppLayout } from '@/components/app-layout';
 import { ThemeProvider } from '@/components/theme-provider';
 
 export default function Home() {
-  const [activeView, setActiveView] = useState('passwords');
+  const [activeView, setActiveView] = useState('add-password');
 
   return (
     <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
