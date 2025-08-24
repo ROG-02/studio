@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import type { Password } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -34,6 +34,11 @@ export default function AddPasswordSection({ passwords, setPasswords, setActiveV
   const [email, setEmail] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const { toast } = useToast();
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const platformName = e.target.value;
@@ -99,7 +104,7 @@ export default function AddPasswordSection({ passwords, setPasswords, setActiveV
               list="email-suggestions"
             />
             <datalist id="email-suggestions">
-              {uniqueEmails
+              {isClient && uniqueEmails
                 .filter(uniqueEmail => uniqueEmail.toLowerCase().includes(email.toLowerCase()))
                 .map(uniqueEmail => (
                   <option key={uniqueEmail} value={uniqueEmail} />
