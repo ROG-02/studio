@@ -4,6 +4,7 @@ export interface Password {
   username?: string;
   email: string;
   value: string;
+  category?: string;
 }
 
 export interface ApiKey {
