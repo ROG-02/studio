@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Eye, EyeOff, PlusCircle } from 'lucide-react';
+import { getPasswordStrength, generatePassword } from '@/lib/utils';
 
 interface AddPasswordSectionProps {
   passwords: Password[];
@@ -32,7 +33,10 @@ const getCategoryForPlatform = (platformName: string): string => {
 export default function AddPasswordSection({ setPasswords, setActiveView }: AddPasswordSectionProps) {
   const [category, setCategory] = useState('');
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
+  const [passwordValue, setPasswordValue] = useState('');
   const { toast } = useToast();
+
+  const passwordStrength = getPasswordStrength(passwordValue);
 
   const handlePlatformChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const platformName = e.target.value;
@@ -52,16 +56,18 @@ export default function AddPasswordSection({ setPasswords, setActiveView }: AddP
       category: formData.get('category') as string,
     };
 
+    if (getPasswordStrength(newPassword.value) === 'Weak') {
+      toast({ title: 'Password is too weak!', variant: 'destructive' });
+      return;
+    }
+
     setPasswords((prev) => [...prev, newPassword]);
     toast({ title: 'Password added successfully!' });
     e.currentTarget.reset();
     setCategory('');
+    setPasswordValue('');
     setActiveView('passwords');
   };
-
-  const togglePasswordVisibility = () => {
-    setIsPasswordVisible((prev) => !prev);
-  }
 
   return (
     <Card className="max-w-2xl mx-auto animate-slide-in-from-right">
@@ -91,11 +97,24 @@ export default function AddPasswordSection({ setPasswords, setActiveView }: AddP
           </div>
           <div className="space-y-2">
             <Label htmlFor="value">Password</Label>
-            <div className="relative">
-                <Input id="value" name="value" type={isPasswordVisible ? 'text' : 'password'} required />
-                <Button type="button" variant="ghost" size="icon" className="absolute right-1 top-1/2 -translate-y-1/2 h-7 w-7" onClick={togglePasswordVisibility}>
-                    {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </Button>
+            <div className="flex items-center gap-2 mb-2">
+              <Input
+                id="value"
+                name="value"
+                type={isPasswordVisible ? 'text' : 'password'}
+                value={passwordValue}
+                onChange={e => setPasswordValue(e.target.value)}
+                required
+              />
+              <Button type="button" variant="ghost" onClick={() => setIsPasswordVisible(v => !v)}>
+                {isPasswordVisible ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </Button>
+              <Button type="button" variant="outline" onClick={() => setPasswordValue(generatePassword())}>
+                Generate
+              </Button>
+            </div>
+            <div className={`text-xs font-bold mb-4 ${passwordStrength === 'Strong' ? 'text-green-500' : passwordStrength === 'Medium' ? 'text-yellow-500' : 'text-red-500'}`}>
+              Strength: {passwordStrength}
             </div>
           </div>
           <div className="space-y-2">

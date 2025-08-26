@@ -13,12 +13,14 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { generatePassword } from '@/lib/utils'; // Adjust the import based on your project structure
 
 
 export default function GoogleCodesSection() {
   const [codes, setCodes] = useLocalStorage<StoredGoogleCode[]>('citadel-google-codes', []);
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [totpSecret, setTotpSecret] = useState('');
 
   const handleFileImport = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -113,8 +115,14 @@ export default function GoogleCodesSection() {
   return (
     <Card className="animate-slide-in-from-right">
       <CardHeader>
-        <CardTitle>Google Backup Codes</CardTitle>
-        <CardDescription>Import, view, and export your Google backup codes.</CardDescription>
+        <CardTitle>Google Backup Codes & MFA</CardTitle>
+        <CardDescription>Manage your backup codes and set up multi-factor authentication (MFA).</CardDescription>
+        <div className="mt-4">
+          <Label htmlFor="totp-secret">TOTP Secret (for MFA)</Label>
+          <Input id="totp-secret" type="text" value={totpSecret} onChange={e => setTotpSecret(e.target.value)} placeholder="Enter or generate TOTP secret" />
+          <Button type="button" variant="outline" onClick={() => setTotpSecret(generatePassword(20))} className="mt-2">Generate Secret</Button>
+          <div className="text-xs mt-2">Use this secret in your authenticator app (e.g., Google Authenticator).</div>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs defaultValue="store">

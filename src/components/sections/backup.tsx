@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Download, ShieldCheck } from 'lucide-react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
+import { encryptData, decryptData } from '@/lib/utils';
 
 export default function BackupSection() {
   const [passwords, setPasswords] = useLocalStorage<Password[]>('citadel-passwords', []);
@@ -19,18 +20,20 @@ export default function BackupSection() {
 
 
   const handleExport = () => {
+    const secret = prompt('Enter a passphrase to encrypt your backup:');
+    if (!secret) return toast({ title: 'Export cancelled.' });
     const appData: AppData = { passwords, apiKeys, googleCodes };
-    const content = JSON.stringify(appData, null, 2);
-    const blob = new Blob([content], { type: 'application/json' });
+    const encrypted = encryptData(JSON.stringify(appData), secret);
+    const blob = new Blob([encrypted], { type: 'application/octet-stream' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `citadel-guard-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `citadel-guard-backup-${new Date().toISOString().split('T')[0]}.enc`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
-    toast({ title: 'Full backup exported successfully!' });
+    toast({ title: 'Encrypted backup exported successfully!' });
   };
   
   const triggerFileImport = () => {
@@ -43,8 +46,11 @@ export default function BackupSection() {
       const reader = new FileReader();
       reader.onload = (e) => {
         try {
-          const content = e.target?.result as string;
-          const data = JSON.parse(content) as AppData;
+          const encrypted = e.target?.result as string;
+          const secret = prompt('Enter the passphrase to decrypt your backup:');
+          if (!secret) throw new Error('No passphrase provided.');
+          const decrypted = decryptData(encrypted, secret);
+          const data = JSON.parse(decrypted) as AppData;
           // Basic validation
           if (Array.isArray(data.passwords) && Array.isArray(data.apiKeys) && Array.isArray(data.googleCodes)) {
             setImportedData(data);
@@ -52,7 +58,7 @@ export default function BackupSection() {
             throw new Error('Invalid backup file format.');
           }
         } catch (error) {
-           toast({ title: 'Import failed.', description: 'The selected file is not a valid backup file.', variant: 'destructive' });
+           toast({ title: 'Import failed.', description: 'The selected file is not a valid encrypted backup file.', variant: 'destructive' });
         }
       };
       reader.readAsText(file);

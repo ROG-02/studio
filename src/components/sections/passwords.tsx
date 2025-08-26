@@ -112,17 +112,15 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     setCategory('');
   }
 
-  const filteredPasswords = passwords.filter(p => {
-    const searchTermLower = searchTerm.toLowerCase();
-    const platformFilterLower = platformFilter.toLowerCase();
-    const categoryFilterLower = tagFilter.toLowerCase(); // Using 'tag' filter for category
+  // Filtered passwords by search term
+  const filteredPasswords = passwords.filter((p) => {
+    const term = searchTerm.toLowerCase();
     return (
-        (p.name.toLowerCase().includes(searchTermLower) || 
-         (p.username && p.username.toLowerCase().includes(searchTermLower)) || 
-         p.email.toLowerCase().includes(searchTermLower)) &&
-        p.name.toLowerCase().includes(platformFilterLower) &&
-        (p.category && p.category.toLowerCase().includes(categoryFilterLower))
-    )
+      p.name.toLowerCase().includes(term) ||
+      (p.username && p.username.toLowerCase().includes(term)) ||
+      p.email.toLowerCase().includes(term) ||
+      (p.category && p.category.toLowerCase().includes(term))
+    );
   });
 
   const handleSelectAll = (checked: boolean) => {
