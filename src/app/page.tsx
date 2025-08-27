@@ -22,8 +22,11 @@ export default function Home() {
     if (mounted && !loading && !isAuthenticated) {
       console.log('Not authenticated, redirecting to login');
       router.push('/login');
+    } else if (isAuthenticated && !isVaultUnlocked) {
+      console.log('Authenticated but vault locked, redirecting to add-password tab');
+      setActiveView('add-password');
     }
-  }, [mounted, loading, isAuthenticated, router]);
+  }, [mounted, loading, isAuthenticated, isVaultUnlocked, router]);
 
   // Force re-evaluation of auth state after completing auth steps
   const handleAuthStepComplete = () => {
@@ -31,6 +34,15 @@ export default function Home() {
     // The AuthContext should automatically update the state
     // Just set a default view for when the app loads
     setActiveView('passwords');
+  };
+
+  const handleViewPasswords = () => {
+    if (!isVaultUnlocked) {
+      console.log('Vault locked, prompting for master password');
+      setActiveView('vault-unlock');
+    } else {
+      setActiveView('view-passwords');
+    }
   };
 
   // Show loading while checking authentication
