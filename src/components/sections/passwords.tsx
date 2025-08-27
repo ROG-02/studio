@@ -14,6 +14,7 @@ import { MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy, Search, RefreshCw, U
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
+import { SecureClipboard } from '@/lib/crypto';
 
 interface PasswordsSectionProps {
   passwords: Password[];
@@ -22,7 +23,7 @@ interface PasswordsSectionProps {
 
 const getCategoryForPlatform = (platformName: string): string => {
   if (!platformName) return 'General';
-  const name = platformName.toLowerCase();
+  const name = platformName.toUpperCase();
   if (['facebook', 'twitter', 'instagram', 'linkedin', 'tiktok', 'snapchat', 'pinterest', 'x'].some(p => name.includes(p))) return 'Social Media';
   if (['google', 'microsoft', 'apple', 'icloud'].some(p => name.includes(p))) return 'Account';
   if (['amazon', 'ebay', 'walmart', 'shopify', 'etsy'].some(p => name.includes(p))) return 'Shopping';
@@ -90,13 +91,19 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     setIsEditPasswordVisible((prev) => !prev);
   }
   
-  const copyToClipboard = (text: string, e: React.MouseEvent) => {
+  const copyToClipboard = async (text: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard!', description: 'Content will be cleared in 30 seconds.' });
-    setTimeout(() => {
-        navigator.clipboard.writeText(' ');
-    }, 30000);
+    try {
+      await SecureClipboard.copy(text, 30000);
+      toast({ title: 'Copied to clipboard!', description: 'Content will be cleared in 30 seconds.' });
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      toast({ 
+        title: 'Copy failed', 
+        description: 'Unable to copy to clipboard. Please try again or ensure the page is focused.', 
+        variant: 'destructive' 
+      });
+    }
   }
 
   const openDialog = (password: Password) => {
@@ -112,8 +119,14 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
     setCategory('');
   }
 
+  // Filter out any passwords with duplicate or invalid IDs first
+  const uniquePasswords = passwords.filter((password, index, arr) => {
+    // Ensure password has a valid ID and is not a duplicate
+    return password && password.id && arr.findIndex(p => p.id === password.id) === index;
+  });
+
   // Filtered passwords by search term
-  const filteredPasswords = passwords.filter((p) => {
+  const filteredPasswords = uniquePasswords.filter((p) => {
     const term = searchTerm.toLowerCase();
     return (
       p.name.toLowerCase().includes(term) ||
@@ -144,7 +157,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
       toast({ title: 'Please select exactly one password to edit.', variant: 'destructive'});
       return;
     }
-    const passwordToEdit = passwords.find(p => p.id === selectedPasswords[0]);
+    const passwordToEdit = uniquePasswords.find(p => p.id === selectedPasswords[0]);
     if (passwordToEdit) {
       openDialog(passwordToEdit);
     }
@@ -159,11 +172,11 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
   }
 
   const handleExport = () => {
-    if(passwords.length === 0) {
+    if(uniquePasswords.length === 0) {
       toast({ title: 'No passwords to export.', variant: 'destructive'});
       return;
     }
-    const dataStr = JSON.stringify(passwords, null, 2);
+    const dataStr = JSON.stringify(uniquePasswords, null, 2);
     const dataBlob = new Blob([dataStr], { type: 'application/json' });
     const url = URL.createObjectURL(dataBlob);
     const link = document.createElement('a');
@@ -188,7 +201,7 @@ export default function PasswordsSection({ passwords, setPasswords }: PasswordsS
           const imported = JSON.parse(content) as Password[];
           // Basic validation
           if (Array.isArray(imported) && imported.every(p => p.id && p.name && p.value && p.email)) {
-             const uniqueImported = imported.filter(ip => !passwords.some(pp => pp.id === ip.id));
+             const uniqueImported = imported.filter(ip => !uniquePasswords.some(pp => pp.id === ip.id));
              setPasswords(prev => [...prev, ...uniqueImported]);
             toast({ title: `${uniqueImported.length} new passwords imported successfully.` });
           } else {

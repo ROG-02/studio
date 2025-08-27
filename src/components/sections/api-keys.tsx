@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { PlusCircle, MoreHorizontal, Eye, EyeOff, Trash2, Pencil, Copy } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { SecureClipboard } from '@/lib/crypto';
 
 export default function ApiKeysSection() {
   const [apiKeys, setApiKeys] = useLocalStorage<ApiKey[]>('citadel-api-keys', []);
@@ -38,8 +39,7 @@ export default function ApiKeysSection() {
       setApiKeys([...apiKeys, apiKeyData]);
       toast({ title: 'API Key added successfully!' });
     }
-    
-    // Close dialog or form
+    e.currentTarget.reset();
     setIsDialogOpen(false);
     setIsFormVisible(false);
     setCurrentApiKey(null);
@@ -54,12 +54,18 @@ export default function ApiKeysSection() {
     setVisibleApiKeys((prev) => ({ ...prev, [id]: !prev[id] }));
   };
 
-  const copyToClipboard = (text: string) => {
-    navigator.clipboard.writeText(text);
-    toast({ title: 'Copied to clipboard!', description: 'Content will be cleared in 30 seconds.'});
-    setTimeout(() => {
-        navigator.clipboard.writeText(' ');
-    }, 30000);
+  const copyToClipboard = async (text: string) => {
+    try {
+      await SecureClipboard.copy(text, 30000);
+      toast({ title: 'Copied to clipboard!', description: 'Content will be cleared in 30 seconds.'});
+    } catch (error) {
+      console.error('Failed to copy to clipboard:', error);
+      toast({ 
+        title: 'Copy failed', 
+        description: 'Unable to copy API key. Please try again or ensure the page is focused.', 
+        variant: 'destructive' 
+      });
+    }
   }
 
   const openDialog = (apiKey: ApiKey | null) => {
@@ -80,15 +86,33 @@ export default function ApiKeysSection() {
            <CardDescription>Click here to add a new API key to your vault.</CardDescription>
         </CardHeader>
         <CardContent>
-           <form onSubmit={handleSave}>
+           <form onSubmit={handleSave} autoComplete="off">
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Service</Label>
-                  <Input id="name" name="name" placeholder="e.g. OpenAI" required />
+                  <Input 
+                      id="name" 
+                      name="name" 
+                      placeholder="e.g. OpenAI" 
+                      required 
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                  />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="value">API Key</Label>
-                  <Input id="value" name="value" type="password" required />
+                  <Input 
+                      id="value" 
+                      name="value" 
+                      type="password" 
+                      required 
+                      autoComplete="off"
+                      autoCorrect="off"
+                      autoCapitalize="off"
+                      spellCheck="false"
+                  />
                 </div>
               </div>
               <div className="flex justify-end mt-6">
@@ -182,15 +206,36 @@ export default function ApiKeysSection() {
               <DialogHeader>
                 <DialogTitle>Edit API Key</DialogTitle>
               </DialogHeader>
-              <form onSubmit={handleSave}>
+              <form onSubmit={handleSave} autoComplete="off">
                 <div className="grid gap-4 py-4">
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-name" className="text-right">Service</Label>
-                    <Input id="edit-name" name="name" defaultValue={currentApiKey?.name} className="col-span-3" required />
+                    <Input 
+                        id="edit-name" 
+                        name="name" 
+                        defaultValue={currentApiKey?.name} 
+                        className="col-span-3" 
+                        required 
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                    />
                   </div>
                   <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="edit-value" className="text-right">API Key</Label>
-                    <Input id="edit-value" name="value" type="password" defaultValue={currentApiKey?.value} className="col-span-3" required />
+                    <Input 
+                        id="edit-value" 
+                        name="value" 
+                        type="password" 
+                        defaultValue={currentApiKey?.value} 
+                        className="col-span-3" 
+                        required 
+                        autoComplete="off"
+                        autoCorrect="off"
+                        autoCapitalize="off"
+                        spellCheck="false"
+                    />
                   </div>
                 </div>
                 <DialogFooter>

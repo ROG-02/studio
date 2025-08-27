@@ -1,109 +1,246 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signInWithEmail, signUpWithEmail, signOutUser, auth } from '@/lib/firebase';
+import { useAuth } from '@/contexts/AuthContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { CitadelGuardLogo } from '@/components/icons';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const router = useRouter();
+  
+  const { user, signIn, signUp, loading, error } = useAuth();
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
-    if (!email || !password) {
-      setError('Both fields are required');
-      return;
-    }
-    try {
-      await signInWithEmail(email, password);
-      window.localStorage.setItem('isAuthenticated', 'true');
+  useEffect(() => {
+    setMounted(true);
+    
+    // Force clear any autofilled values
+    setEmail('');
+    setPassword('');
+  }, []);
+
+  // Clear fields whenever component mounts or remounts
+  useEffect(() => {
+    const clearFields = () => {
+      setEmail('');
+      setPassword('');
+    };
+    
+    // Clear immediately
+    clearFields();
+    
+    // Clear again after a short delay to override any browser autofill
+    const timeoutId = setTimeout(clearFields, 100);
+    
+    return () => clearTimeout(timeoutId);
+  }, [mounted]);
+
+  useEffect(() => {
+    if (mounted && user) {
+      console.log('User already authenticated, redirecting to main page');
       router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Login failed');
     }
+  }, [mounted, user, router]);
+
+  const toggleMode = () => {
+    setIsRegistering(!isRegistering);
+    // Clear fields when switching between login and register
+    setEmail('');
+    setPassword('');
   };
 
-  const handleRegister = async (e: React.FormEvent) => {
+  // Clean up form data when component unmounts
+  useEffect(() => {
+    return () => {
+      setEmail('');
+      setPassword('');
+    };
+  }, []);
+
+  // Additional security: clear fields on page visibility change
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        // Page is hidden, clear sensitive data
+        setEmail('');
+        setPassword('');
+      }
+    };
+
+    const handleFocus = () => {
+      // When window regains focus, ensure fields are empty
+      setEmail('');
+      setPassword('');
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('focus', handleFocus);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('focus', handleFocus);
+    };
+  }, []);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    if (!email || !password) {
-      setError('Both fields are required');
-      return;
-    }
+    
+    if (!mounted || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    
     try {
-      await signUpWithEmail(email, password);
-      window.localStorage.setItem('isAuthenticated', 'true');
-      router.push('/');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed');
+      console.log(`Attempting to ${isRegistering ? 'register' : 'login'} with:`, email);
+      
+      const result = isRegistering 
+        ? await signUp(email, password)
+        : await signIn(email, password);
+      
+      if (result) {
+        console.log(`${isRegistering ? 'Registration' : 'Login'} successful, redirecting...`);
+        
+        // Clear sensitive data immediately
+        setEmail('');
+        setPassword('');
+        
+        router.push('/');
+      } else {
+        console.error(`${isRegistering ? 'Registration' : 'Login'} failed`);
+      }
+    } catch (err) {
+      console.error(`${isRegistering ? 'Registration' : 'Login'} error:`, err);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleSignOut = async () => {
-    try {
-      await signOutUser();
-      window.localStorage.removeItem('isAuthenticated');
-      router.push('/login');
-    } catch (err: any) {
-      setError(err.message || 'Sign out failed');
-    }
-  };
+  if (user) {
+    return null;
+  }
+
+  if (!mounted) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <CitadelGuardLogo className="w-16 h-16 mx-auto mb-4 text-primary animate-pulse" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-  <div className="flex items-center justify-center min-h-screen bg-premium-gradient-animated">
-      <div className="w-full max-w-sm p-6 rounded-lg shadow-lg bg-black bg-opacity-80 border-2 border-cyan-400" style={{ fontFamily: 'monospace' }}>
-        <div className="mb-6 flex items-center justify-between">
-          <span className="text-cyan-400 font-bold tracking-widest">SECURE_DATA</span>
-          <span className="flex space-x-1">
-            <span className="w-2 h-2 bg-gray-700 rounded-full"></span>
-            <span className="w-2 h-2 bg-gray-700 rounded-full"></span>
-            <span className="w-2 h-2 bg-gray-700 rounded-full"></span>
-          </span>
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="w-full max-w-md space-y-6">
+        <div className="text-center">
+          <CitadelGuardLogo className="w-16 h-16 mx-auto mb-4 text-primary" />
+          <h1 className="text-3xl font-bold tracking-tight">Citadel Guard</h1>
+          <p className="text-muted-foreground mt-2">Secure Password Manager</p>
         </div>
-        {error && <p className="text-red-500 text-center mb-4">{error}</p>}
-  <form onSubmit={handleLogin} autoComplete="off" spellCheck={false}>
-          <div className="mb-6">
-            <label htmlFor="email" className="block text-cyan-400 tracking-widest mb-1">EMAIL</label>
-            <input
-              type="email"
-              id="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-transparent border-b-2 border-cyan-400 text-cyan-200 py-2 px-1 focus:outline-none focus:border-cyan-300 placeholder-cyan-600"
-              autoComplete="new-email"
-              required
-              inputMode="email"
-              spellCheck={false}
-              name="email"
-              formNoValidate
-            />
-          </div>
-          <div className="mb-8">
-            <label htmlFor="password" className="block text-cyan-400 tracking-widest mb-1">PASSWORD</label>
-            <input
-              type="password"
-              id="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full bg-transparent border-b-2 border-cyan-400 text-cyan-200 py-2 px-1 focus:outline-none focus:border-cyan-300 placeholder-cyan-600"
-              autoComplete="new-password"
-              required
-              inputMode="text"
-              spellCheck={false}
-              name="password"
-              formNoValidate
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full py-3 border-2 border-cyan-400 text-cyan-400 font-bold tracking-widest rounded hover:bg-cyan-400 hover:text-black transition-colors duration-200 mb-2"
-          >
-            LOGIN
-          </button>
-        </form>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>{isRegistering ? 'Create Account' : 'Sign In'}</CardTitle>
+            <CardDescription>
+              {isRegistering 
+                ? 'Create a new account to get started with Citadel Guard'
+                : 'Enter your credentials to access your secure vault'
+              }
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            {error && (
+              <Alert variant="destructive">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
+
+            <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+              {/* Hidden inputs to confuse browser autofill */}
+              <input type="text" style={{display: 'none'}} />
+              <input type="password" style={{display: 'none'}} />
+              
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="Enter your email"
+                  required
+                  disabled={loading || isSubmitting}
+                  autoComplete="new-email"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
+                  data-form-type="other"
+                  key="email-input"
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Enter your password"
+                  required
+                  disabled={loading || isSubmitting}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck="false"
+                  data-form-type="other"
+                  key="password-input"
+                />
+              </div>
+
+              <Button 
+                type="submit" 
+                className="w-full" 
+                disabled={loading || isSubmitting}
+              >
+                {isSubmitting 
+                  ? `${isRegistering ? 'Creating Account...' : 'Signing In...'}`
+                  : `${isRegistering ? 'Create Account' : 'Sign In'}`
+                }
+              </Button>
+            </form>
+
+            <div className="text-center">
+              <Button
+                variant="link"
+                onClick={toggleMode}
+                disabled={loading || isSubmitting}
+                className="text-sm"
+              >
+                {isRegistering 
+                  ? 'Already have an account? Sign in'
+                  : "Don't have an account? Create one"
+                }
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <p className="text-xs text-muted-foreground">
+            Your data is encrypted with your master password
+          </p>
+        </div>
       </div>
     </div>
   );
