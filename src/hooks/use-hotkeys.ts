@@ -35,8 +35,7 @@ export function useHotkeys(hotkeys: Hotkey[]) {
     (event: KeyboardEvent) => {
       hotkeys.forEach(([hotkey, handler]) => {
         const { key, meta } = parseHotkey(hotkey);
-
-        if (event.key.toLowerCase() === key) {
+        if (typeof event.key === 'string' && event.key.toLowerCase() === key) {
           const allMetaPressed = meta.every(
             (metaKey) => event.getModifierState(metaKey)
           );

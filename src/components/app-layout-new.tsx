@@ -92,7 +92,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
       case 'codes':
         return <CodesSection />;
       case 'backup':
-        return <BackupSection passwords={passwords} setPasswords={setPasswords} />;
+        return <BackupSection />;
       default:
         return <AddPasswordSection passwords={passwords} setPasswords={setPasswords} setActiveView={setActiveView} />;
     }
@@ -112,8 +112,7 @@ export function AppLayout({ activeView, setActiveView }: AppLayoutProps) {
 
   const handleLockVault = () => {
     lockVault();
-    // Redirect to login page after locking vault
-    window.location.href = '/login';
+    window.location.reload(); // Refresh to show unlock screen
   };
 
   const renderThemeSwitcher = () => {

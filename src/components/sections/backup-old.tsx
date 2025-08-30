@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { useLocalStorage } from '@/hooks/use-local-storage';
-import type { AppData, Password, ApiKey, StoredGoogleCode } from '@/lib/types';
+import type { AppData, Password, ApiKey, GoogleBackupCode, StoredGoogleCode } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
@@ -43,6 +43,7 @@ export default function BackupSection({ passwords: propsPasswords, setPasswords:
     };
     loadVaultStats();
   }, []);
+
 
   const handleExport = async () => {
     const secret = prompt('Enter a passphrase to encrypt your backup:');
@@ -216,7 +217,199 @@ export default function BackupSection({ passwords: propsPasswords, setPasswords:
           <CardDescription>Export all your data (passwords, API keys, backup codes, and settings) into a single encrypted file or restore from a backup.</CardDescription>
         </CardHeader>
         <CardContent>
-          {/* Data Summary */}
+            {/* View Backup Codes Section */}
+            <Card className="mb-6">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  View Backup Codes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {!selectedEmail ? (
+                  <div>
+                    <label className="block mb-2 font-medium">Stored backup codes:</label>
+                    <div className="space-y-2">
+                      {googleCodes.length === 0 && (
+                        <div className="text-muted-foreground">No backup codes found.</div>
+                      )}
+                      {googleCodes.map(({ id, email, platform, codes }) => (
+                        <div 
+                          key={id} 
+                          className="p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                          onDoubleClick={() => setSelectedEmail(email)}
+                        >
+                          <div className="font-medium">{email}</div>
+                          <div className="text-sm text-muted-foreground">Platform: {platform}</div>
+                          <div className="text-xs text-muted-foreground">{codes.length} codes available</div>
+                        </div>
+                      ))}
+                    </div>
+                    {googleCodes.length > 0 && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        Double-click an entry to view backup codes
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div>
+                    <Button variant="ghost" size="sm" className="mb-2" onClick={() => setSelectedEmail(null)}>
+                      ← Back to list
+                    </Button>
+                    <label className="block mb-2 font-medium">Backup Codes for {selectedEmail}:</label>
+                    <div className="space-y-2">
+                      {codesForSelectedEmail.length === 0 && (
+                        <div className="text-muted-foreground">No codes found for this email.</div>
+                      )}
+                      {codesForSelectedEmail.flatMap(({ codes, platform }) =>
+                        codes.map((code, index) => {
+                          const isUsed = usedCodes[selectedEmail]?.has(code);
+                          return (
+                            <div key={`${code}-${index}`} className={`flex items-center justify-between p-2 border rounded ${isUsed ? 'opacity-50 bg-gray-100' : 'bg-white'}`}>
+                              <div className="flex items-center gap-3">
+                                <span className="font-mono text-sm">{index + 1}.</span>
+                                <span className="font-mono bg-gray-100 px-2 py-1 rounded border">{code}</span>
+                              </div>
+                              {!isUsed ? (
+                                <Button size="sm" variant="outline" onClick={() => handleCopyCode(selectedEmail, code)}>
+                                  Copy
+                                </Button>
+                              ) : (
+                                <span className="text-xs text-muted-foreground">USED</span>
+                              )}
+                            </div>
+                          );
+                        })
+                      )}
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Import Backup Codes Section */}
+            <Card className="mb-6">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg font-medium flex items-center gap-2">
+                  Import Backup Codes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form
+                  onSubmit={async e => {
+                    e.preventDefault();
+                    const form = e.target as HTMLFormElement;
+                    const email = (form.email as HTMLInputElement).value.trim();
+                    const platform = (form.platform as HTMLInputElement).value.trim();
+                    const file = (form.codes as HTMLInputElement).files?.[0];
+                    
+                    if (!email || !platform || !file) {
+                      toast({ title: 'Missing fields', description: 'Please provide email, platform, and select a .txt file.', variant: 'destructive' });
+                      return;
+                    }
+                    
+                    try {
+                      const text = await file.text();
+                      
+                      // Parse Google backup codes format
+                      const lines = text.split(/\r?\n/);
+                      const codes: string[] = [];
+                      
+                      for (const line of lines) {
+                        const trimmedLine = line.trim();
+                        if (!trimmedLine) continue;
+                        
+                        // Match patterns like "1. ALREADY USED" or "3. 8374 9658"
+                        const match = trimmedLine.match(/^\d+\.\s*(.+)$/);
+                        if (match) {
+                          const codeText = match[1].trim();
+                          // Skip "ALREADY USED" entries
+                          if (codeText.toUpperCase().includes('ALREADY USED')) {
+                            continue;
+                          }
+                          // Store the code as-is (with spaces if present)
+                          codes.push(codeText);
+                        }
+                        // Also handle lines that might just be codes without numbers
+                        else if (/^\d{4}\s*\d{4}$/.test(trimmedLine)) {
+                          codes.push(trimmedLine);
+                        }
+                      }
+                      
+                      if (codes.length === 0) {
+                        toast({ 
+                          title: 'No valid codes found', 
+                          description: 'The file does not contain any valid backup codes.', 
+                          variant: 'destructive' 
+                        });
+                        return;
+                      }
+                      
+                      // Store codes under the correct email/platform
+                      setGoogleCodes(prev => {
+                        // Remove any existing entry for this email/platform combination
+                        const filtered = prev.filter(c => !(c.email === email && c.platform === platform));
+                        return [
+                          ...filtered,
+                          { id: `${email}-${platform}-${Date.now()}`, email, platform, codes }
+                        ];
+                      });
+                      
+                      toast({ 
+                        title: 'Backup codes imported successfully!', 
+                        description: `Imported ${codes.length} valid codes for ${email} (${platform}).` 
+                      });
+                      form.reset();
+                      
+                    } catch (error) {
+                      console.error('Import error:', error);
+                      toast({ 
+                        title: 'Import failed', 
+                        description: 'Failed to read or parse the backup codes file.', 
+                        variant: 'destructive' 
+                      });
+                    }
+                  }}
+                >
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">Email Address:</label>
+                    <input 
+                      name="email" 
+                      type="email" 
+                      className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="example@gmail.com"
+                      required 
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">Platform:</label>
+                    <input 
+                      name="platform" 
+                      type="text" 
+                      className="border rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 focus:ring-blue-500" 
+                      placeholder="Google, GitHub, etc."
+                      required 
+                    />
+                  </div>
+                  <div className="mb-4">
+                    <label className="block mb-2 font-medium">Import from .txt file:</label>
+                    <input 
+                      name="codes" 
+                      type="file" 
+                      accept=".txt" 
+                      className="border rounded-md px-3 py-2 w-full file:mr-4 file:py-1 file:px-2 file:rounded file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100" 
+                      required 
+                    />
+                    <div className="text-xs text-muted-foreground mt-1">
+                      Upload a .txt file with backup codes (supports Google backup codes format)
+                    </div>
+                  </div>
+                  <Button type="submit" variant="default" className="w-full">
+                    Import Backup Codes
+                  </Button>
+                </form>
+              </CardContent>
+            </Card>
+          {/* Backup Statistics */}
           <Card className="mb-6">
             <CardHeader className="pb-2">
               <CardTitle className="text-lg font-medium flex items-center gap-2">

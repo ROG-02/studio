@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -63,11 +64,39 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-background text-foreground;
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+}
+
+@keyframes bg-fade {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-bg-fade {
+  animation: bg-fade 6s ease-in-out infinite;
+  background-size: 200% 200%;
+}
+
+.bg-premium-gradient {
+  background: linear-gradient(120deg, #134e5e 0%, #0c2e3c 50%, #000000 100%);
+}
+
+.bg-premium-gradient-animated {
+  background: linear-gradient(120deg, #134e5e, #0c2e3c, #000000);
+  background-size: 200% 200%;
+  animation: bg-fade 6s ease-in-out infinite;
 }

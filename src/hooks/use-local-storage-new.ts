@@ -38,9 +38,7 @@ export function useLocalStorage<T>(
   // Listen for custom storage events
   useEffect(() => {
     const handleStorageChange = () => {
-      console.log(`Storage change detected for key: ${key}`);
       const newValue = getValue(key, defaultValue);
-      console.log(`New value for ${key}:`, newValue);
       setValue(newValue);
     };
 
@@ -50,7 +48,6 @@ export function useLocalStorage<T>(
     // Also listen to the standard storage event for cross-tab changes
     window.addEventListener('storage', (e) => {
       if (e.key === key) {
-        console.log(`Standard storage event for ${key}`);
         handleStorageChange();
       }
     });
@@ -68,10 +65,8 @@ export function useLocalStorage<T>(
         : newValue;
       
       try {
-        console.log(`Setting localStorage ${key}:`, valueToStore);
         localStorage.setItem(key, JSON.stringify(valueToStore));
         // Notify other components about the change
-        console.log(`Dispatching event for ${key}`);
         createStorageEvent(key);
       } catch (e) {
         console.error('Failed to save to localStorage', e);

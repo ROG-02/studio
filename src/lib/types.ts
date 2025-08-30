@@ -26,4 +26,11 @@ export interface AppData {
   passwords: Password[];
   apiKeys: ApiKey[];
   googleCodes: StoredGoogleCode[];
+  // Secure vault data (encrypted format)
+  secureVaultData?: any;
+  // Application settings and preferences
+  settings?: any;
+  // Export metadata
+  exportedAt: string;
+  version: string;
 }
